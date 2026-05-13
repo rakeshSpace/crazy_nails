@@ -44,7 +44,7 @@ const Cart = () => {
         return (
             <>
                 <Helmet>
-                    <title>Shopping Cart | Crazy Nails & Lashes</title>
+                    <title>Shopping Cart | Crazy Nails</title>
                 </Helmet>
                 
                 <section className="min-h-screen py-28 bg-light dark:bg-dark-light">
@@ -64,7 +64,7 @@ const Cart = () => {
     return (
         <>
             <Helmet>
-                <title>Shopping Cart | Crazy Nails & Lashes</title>
+                <title>Shopping Cart | Crazy Nails</title>
                 <meta name="description" content="Review your items, update quantities, and proceed to checkout securely." />
             </Helmet>
 

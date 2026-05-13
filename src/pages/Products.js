@@ -93,7 +93,7 @@ const Products = () => {
     return (
         <>
             <Helmet>
-                <title>Shop Products | Crazy Nails & Lashes</title>
+                <title>Shop Products | Crazy Nails</title>
                 <meta name="description" content="Shop premium beauty products including nail care, lash care, skincare, and professional tools. Free shipping on orders above ₹2000." />
             </Helmet>
 
@@ -226,10 +226,10 @@ const Products = () => {
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Need Help Choosing Products?</h2>
                     <p className="text-white/90 text-lg mb-8">Our beauty experts can help you select the right products for your needs. Contact us for personalized recommendations.</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="tel:8264304266" className="btn bg-white text-primary hover:bg-accent">
+                        <a href="tel:8264304266" className="btn btn-call">
                             <i className="fas fa-phone-alt mr-2"></i> Call for Assistance
                         </a>
-                        <Link to="/booking?service=Product Consultation" className="btn-outline border-white text-white hover:bg-white hover:text-primary">
+                        <Link to="/booking?service=Product Consultation" className="btn-book">
                             <i className="fas fa-calendar-alt mr-2"></i> Book Consultation
                         </Link>
                     </div>

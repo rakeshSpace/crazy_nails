@@ -65,7 +65,7 @@ const Services = () => {
     return (
         <>
             <Helmet>
-                <title>Our Services | Crazy Nails & Lashes</title>
+                <title>Our Services | Crazy Nails</title>
                 <meta name="description" content="Explore our premium beauty services including nail extensions, eyelash treatments, facials, waxing, and more." />
             </Helmet>
 
@@ -210,7 +210,7 @@ const Services = () => {
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Ready to Book Your Service?</h2>
                     <p className="text-white/90 text-lg mb-8">Select your preferred service and time slot for a seamless booking experience</p>
-                    <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Appointment Now</Link>
+                    <Link to="/booking" className="btn-book">Book Appointment Now</Link>
                 </div>
             </section>
         </>

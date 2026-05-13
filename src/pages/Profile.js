@@ -26,7 +26,7 @@ const Profile = () => {
     return (
         <>
             <Helmet>
-                <title>My Profile | Crazy Nails & Lashes</title>
+                <title>My Profile | Crazy Nails</title>
                 <meta name="description" content="Manage your profile information, view booking history, and update account settings." />
             </Helmet>
 

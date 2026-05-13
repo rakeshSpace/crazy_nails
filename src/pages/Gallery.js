@@ -120,7 +120,7 @@ const Gallery = () => {
     return (
         <>
             <Helmet>
-                <title>Gallery | Crazy Nails & Lashes</title>
+                <title>Gallery | Crazy Nails</title>
                 <meta name="description" content="Explore our portfolio of nail art, eyelash extensions, and beauty transformations. See why we're the preferred choice for premium beauty services." />
             </Helmet>
 
@@ -306,7 +306,8 @@ const Gallery = () => {
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Inspired by Our Work?</h2>
                     <p className="text-white/90 text-lg mb-8">Book an appointment to get your own beautiful transformation</p>
-                    <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Your Appointment Now</Link>
+                    {/* <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Your Appointment Now</Link> */}
+                    <Link to="/booking" className="btn-book">Book Your Appointment Now</Link>
                 </div>
             </section>
 

@@ -16,7 +16,7 @@ const About = () => {
             // In production, fetch from API
             // const response = await api.get('/testimonials?approved=true');
             // setTestimonials(response.data);
-            
+
             // Mock data for demo
             setTestimonials([
                 { id: 1, name: 'Priya Sharma', role: 'Regular Client', comment: 'I\'ve been getting my nails done at Crazy Nails for over a year now. Their attention to detail is amazing, and my gel nails last perfectly for 3+ weeks every time!', rating: 5 },
@@ -46,15 +46,15 @@ const About = () => {
     return (
         <>
             <Helmet>
-                <title>Why Choose Us | Crazy Nails & Lashes</title>
-                <meta name="description" content="Discover what makes Crazy Nails & Lashes the preferred choice for premium beauty services. Quality excellence, client satisfaction, hygiene, and expert team." />
+                <title>Why Choose Us | Crazy Nails</title>
+                <meta name="description" content="Discover what makes Crazy Nails the preferred choice for premium beauty services. Quality excellence, client satisfaction, hygiene, and expert team." />
             </Helmet>
 
             {/* Page Header */}
             <section className="page-header bg-gradient-to-r from-dark to-dark-light text-white py-28 text-center mt-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/50"></div>
                 <div className="container mx-auto px-4 max-w-7xl relative z-10">
-                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Why Choose Crazy Nails & Lashes</h1>
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Why Choose Crazy Nails</h1>
                     <p className="text-white/90 text-lg max-w-2xl mx-auto">Discover what makes us the preferred choice for premium beauty services</p>
                 </div>
             </section>
@@ -63,7 +63,7 @@ const About = () => {
             <section className="py-16 bg-white dark:bg-dark">
                 <div className="container mx-auto px-4 max-w-4xl text-center">
                     <h2 className="text-2xl md:text-3xl font-bold mb-6">Our Commitment to Excellence</h2>
-                    <p className="text-gray text-lg mb-4">At Crazy Nails & Lashes, we believe that beauty is an art form that should be accessible to everyone. Founded with a passion for enhancing natural beauty, we've grown to become one of the city's most trusted beauty salons, specializing in nail extensions, eyelash treatments, and comprehensive beauty services.</p>
+                    <p className="text-gray text-lg mb-4">At Crazy Nails, we believe that beauty is an art form that should be accessible to everyone. Founded with a passion for enhancing natural beauty, we've grown to become one of the city's most trusted beauty salons, specializing in nail extensions, eyelash treatments, and comprehensive beauty services.</p>
                     <p className="text-gray text-lg">Our mission is simple: to provide exceptional beauty services in a welcoming, hygienic environment where every client feels valued and leaves looking and feeling their absolute best.</p>
                 </div>
             </section>
@@ -73,7 +73,7 @@ const About = () => {
                 <div className="container mx-auto px-4 max-w-7xl">
                     <div className="section-title">
                         <h2 className="text-2xl md:text-3xl font-bold">Our Core Values</h2>
-                        <p>The principles that guide everything we do at Crazy Nails & Lashes</p>
+                        <p>The principles that guide everything we do at Crazy Nails</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
                         {values.map((value, index) => (
@@ -148,11 +148,11 @@ const About = () => {
             <section className="py-16 bg-gradient-to-r from-primary to-secondary text-white text-center">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Experience the Difference</h2>
-                    <p className="text-white/90 text-lg mb-8">Book your appointment today and discover why so many clients trust Crazy Nails & Lashes for their beauty needs.</p>
+                    <p className="text-white/90 text-lg mb-8">Book your appointment today and discover why so many clients trust Crazy Nails for their beauty needs.</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Now</Link>
-                        <a href="tel:8264304266" className="btn-outline border-white text-white hover:bg-white hover:text-primary">
-                            <i className="fas fa-phone-alt mr-2"></i> Call: 8264304266
+                        <Link to="/booking" className="btn-book">Book Now</Link>
+                        <a href="tel:8264304266" className="btn btn-call">
+                            <i className="fas fa-phone-alt"></i> Call Now
                         </a>
                     </div>
                 </div>

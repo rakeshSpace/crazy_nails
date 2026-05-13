@@ -11,10 +11,22 @@ const Footer = () => {
                     {/* Brand */}
                     <div>
                         <div className="flex items-center gap-3 mb-5">
-                            <i className="fas fa-crown text-3xl text-primary"></i>
+
+                            {/* Full Logo */}
+                            <img
+                                src="/logo.png"
+                                alt="Crazy Nails Logo"
+                                className="h-16 w-auto object-contain"
+                            />
+
                             <div>
-                                <h3 className="text-xl font-bold mb-1">Crazy Nails & Lashes</h3>
-                                <p className="text-white/70 text-xs mb-0">Beauty & Nail Salon</p>
+                                <h3 className="text-xl font-bold mb-1">
+                                    Crazy Nails
+                                </h3>
+
+                                <p className="text-white/70 text-xs mb-0">
+                                    Beauty & Nail Salon
+                                </p>
                             </div>
                         </div>
                         <p className="text-white/70 text-sm leading-relaxed mb-5">
@@ -91,7 +103,7 @@ const Footer = () => {
                 </div>
 
                 <div className="text-center pt-6 border-t border-white/10">
-                    <p className="text-white/60 text-sm mb-0">&copy; {currentYear} Crazy Nails & Lashes. All Rights Reserved.</p>
+                    <p className="text-white/60 text-sm mb-0">&copy; {currentYear} Crazy Nails. All Rights Reserved.</p>
                 </div>
             </div>
         </footer>

@@ -78,7 +78,7 @@ const MyBookings = () => {
     return (
         <>
             <Helmet>
-                <title>My Bookings | Crazy Nails & Lashes</title>
+                <title>My Bookings | Crazy Nails</title>
             </Helmet>
 
             <section className="min-h-screen py-28 bg-light dark:bg-dark-light">

@@ -34,12 +34,24 @@ const Header = () => {
                 <nav className="flex justify-between items-center">
                     {/* Logo */}
                     <Link to="/" className="flex items-center gap-3 hover:-translate-y-0.5 transition-all">
-                        <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-xl flex items-center justify-center text-white text-xl shadow-soft">
-                            <i className="fas fa-crown"></i>
+
+                        {/* Logo */}
+                        <div className="w-12 h-12 bg-white rounded-xl overflow-hidden shadow-soft flex items-center justify-center p-1">
+                            <img
+                                src="/logo.png"
+                                alt="Crazy Nails Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
+
+                        {/* Text */}
                         <div>
-                            <h1 className="text-xl font-bold text-dark dark:text-white mb-0">Crazy Nails & Lashes</h1>
-                            <p className="text-xs text-primary uppercase tracking-wider mb-0">Beauty & Nail Salon</p>
+                            <h1 className="text-xl font-bold text-dark dark:text-white mb-0">
+                                Crazy Nails
+                            </h1>
+                            <p className="text-xs text-primary uppercase tracking-wider mb-0">
+                                Beauty & Nail Salon
+                            </p>
                         </div>
                     </Link>
 

@@ -23,7 +23,7 @@ const Home = () => {
             ]);
             setServices(servicesRes.data.slice(0, 4));
             setProducts(productsRes.data);
-            
+
             // Mock testimonials (in production, fetch from API)
             setTestimonials([
                 { id: 1, name: 'Priya Sharma', role: 'Regular Client', comment: 'Best nail salon in town! Their attention to detail is amazing.', rating: 5 },
@@ -72,7 +72,7 @@ const Home = () => {
                 <Slider {...carouselSettings} className="h-full">
                     {heroSlides.map((slide, index) => (
                         <div key={index} className="relative h-[89vh] min-h-[600px]">
-                            <div 
+                            <div
                                 className="absolute inset-0 bg-cover bg-center transition-transform duration-[8s] scale-110"
                                 style={{ backgroundImage: `url(${slide.bgImage}?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80)` }}
                             >
@@ -174,7 +174,7 @@ const Home = () => {
             <section className="section-padding bg-gradient-light dark:bg-dark-light relative overflow-hidden">
                 <div className="container mx-auto px-4 max-w-7xl relative z-10">
                     <div className="section-title">
-                        <h2>Why Choose Crazy Nails & Lashes</h2>
+                        <h2>Why Choose Crazy Nails</h2>
                         <p>We're committed to delivering exceptional beauty experiences</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
@@ -255,10 +255,12 @@ const Home = () => {
             <section className="py-16 bg-gradient-to-r from-primary to-secondary text-white text-center">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Ready for Your Beauty Transformation?</h2>
-                    <p className="text-white/90 text-lg mb-8">Book your appointment today and experience the Crazy Nails & Lashes difference</p>
+                    <p className="text-white/90 text-lg mb-8">Book your appointment today and experience the Crazy Nails difference</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Now</Link>
-                        <a href="tel:8264304266" className="btn-outline border-white text-white hover:bg-white hover:text-primary">Call: 8264304266</a>
+                        <Link to="/booking" className="btn-book">Book Now</Link>
+                        <a href="tel:8264304266" className="btn btn-call">
+                            <i className="fas fa-phone-alt"></i> Call Now
+                        </a>
                     </div>
                 </div>
             </section>

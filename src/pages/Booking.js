@@ -167,7 +167,7 @@ const Booking = () => {
     return (
         <>
             <Helmet>
-                <title>Book Appointment | Crazy Nails & Lashes</title>
+                <title>Book Appointment | Crazy Nails</title>
                 <meta name="description" content="Schedule your beauty treatment with our easy online booking system. Choose from nail extensions, eyelash treatments, facials, and more." />
             </Helmet>
 
