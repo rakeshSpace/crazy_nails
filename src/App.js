@@ -12,7 +12,7 @@ import { CartProvider } from './contexts/CartContext';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
 
-// Pages
+// Public Pages
 import Home from './pages/Home';
 import Services from './pages/Services';
 import Products from './pages/Products';
@@ -21,9 +21,21 @@ import About from './pages/About';
 import Booking from './pages/Booking';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Cart from './pages/Cart';
+import Courses from './pages/Courses';
+import CourseDetails from './pages/CourseDetails';
+import VerifyCertificate from './pages/VerifyCertificate';
+
+// Protected Pages (Requires Login)
 import Profile from './pages/Profile';
 import MyBookings from './pages/MyBookings';
-import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import MyLearning from './pages/MyLearning';
+import MyCertificates from './pages/MyCertificates';
+import CoursePlayer from './pages/CoursePlayer';
+import MyOrders from './pages/MyOrders';
+
+// Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 
 // Protected Route Component
@@ -43,31 +55,85 @@ function App() {
                                 <Header />
                                 <main className="flex-grow">
                                     <Routes>
+                                        {/* ========== PUBLIC ROUTES ========== */}
+                                        {/* Main Pages */}
                                         <Route path="/" element={<Home />} />
                                         <Route path="/services" element={<Services />} />
                                         <Route path="/products" element={<Products />} />
                                         <Route path="/gallery" element={<Gallery />} />
                                         <Route path="/about" element={<About />} />
                                         <Route path="/booking" element={<Booking />} />
+
+                                        {/* Auth Pages */}
                                         <Route path="/login" element={<Login />} />
                                         <Route path="/register" element={<Register />} />
+
+                                        {/* Shopping */}
                                         <Route path="/cart" element={<Cart />} />
 
-                                        {/* Protected Routes */}
+                                        {/* Training & Courses */}
+                                        <Route path="/courses" element={<Courses />} />
+                                        <Route path="/courses/:slug" element={<CourseDetails />} />
+
+                                        {/* Certificate Verification (Public) */}
+                                        <Route path="/verify/:code" element={<VerifyCertificate />} />
+
+                                        {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
+                                        {/* User Profile & Account */}
                                         <Route element={<ProtectedRoute />}>
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/my-bookings" element={<MyBookings />} />
+                                            <Route path="/my-orders" element={<MyOrders />} />
                                         </Route>
 
-                                        {/* Admin Routes */}
+                                        {/* Shopping & Checkout */}
+                                        <Route element={<ProtectedRoute />}>
+                                            <Route path="/checkout" element={<Checkout />} />
+                                        </Route>
+
+                                        {/* Learning Management System */}
+                                        <Route element={<ProtectedRoute />}>
+                                            <Route path="/my-learning" element={<MyLearning />} />
+                                            <Route path="/my-certificates" element={<MyCertificates />} />
+                                            <Route path="/course/learn/:courseId" element={<CoursePlayer />} />
+                                        </Route>
+
+                                        {/* ========== ADMIN ROUTES (Requires Admin Role) ========== */}
                                         <Route element={<ProtectedRoute adminOnly />}>
                                             <Route path="/admin/*" element={<AdminDashboard />} />
                                         </Route>
+
+                                        {/* ========== 404 NOT FOUND ROUTE ========== */}
+                                        {/* Add this as the last route */}
+                                        <Route path="*" element={<NotFound />} />
                                     </Routes>
                                 </main>
                                 <Footer />
                             </div>
-                            <Toaster position="top-right" />
+                            <Toaster
+                                position="top-right"
+                                toastOptions={{
+                                    duration: 4000,
+                                    style: {
+                                        background: '#363636',
+                                        color: '#fff',
+                                    },
+                                    success: {
+                                        duration: 3000,
+                                        iconTheme: {
+                                            primary: '#27ae60',
+                                            secondary: '#fff',
+                                        },
+                                    },
+                                    error: {
+                                        duration: 4000,
+                                        iconTheme: {
+                                            primary: '#e74c3c',
+                                            secondary: '#fff',
+                                        },
+                                    },
+                                }}
+                            />
                         </Router>
                     </CartProvider>
                 </AuthProvider>
@@ -75,5 +141,23 @@ function App() {
         </HelmetProvider>
     );
 }
+
+// 404 Not Found Component
+const NotFound = () => {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-light dark:bg-dark-light">
+            <div className="text-center px-4">
+                <div className="text-9xl font-bold text-primary mb-4">404</div>
+                <h1 className="text-3xl font-bold mb-2 text-dark dark:text-white">Page Not Found</h1>
+                <p className="text-gray mb-8 max-w-md">
+                    Oops! The page you're looking for doesn't exist or has been moved.
+                </p>
+                <a href="/" className="btn inline-block">
+                    <i className="fas fa-home mr-2"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    );
+};
 
 export default App;

@@ -26,14 +26,13 @@ const Cart = () => {
             return;
         }
         
-        setCheckoutLoading(true);
-        // Simulate checkout process
-        setTimeout(() => {
-            toast.success('Order placed successfully!');
-            clearCart();
-            navigate('/my-orders');
-            setCheckoutLoading(false);
-        }, 1500);
+        if (cartItems.length === 0) {
+            toast.error('Your cart is empty');
+            return;
+        }
+        
+        // Navigate to checkout page with cart data
+        navigate('/checkout');
     };
 
     const subtotal = getCartTotal();
@@ -44,7 +43,7 @@ const Cart = () => {
         return (
             <>
                 <Helmet>
-                    <title>Shopping Cart | Crazy Nails</title>
+                    <title>Shopping Cart | Crazy Nails & Lashes</title>
                 </Helmet>
                 
                 <section className="min-h-screen py-28 bg-light dark:bg-dark-light">
@@ -64,7 +63,7 @@ const Cart = () => {
     return (
         <>
             <Helmet>
-                <title>Shopping Cart | Crazy Nails</title>
+                <title>Shopping Cart | Crazy Nails & Lashes</title>
                 <meta name="description" content="Review your items, update quantities, and proceed to checkout securely." />
             </Helmet>
 
@@ -176,11 +175,7 @@ const Cart = () => {
                                     disabled={checkoutLoading}
                                     className="w-full btn py-3 text-lg font-semibold disabled:opacity-50"
                                 >
-                                    {checkoutLoading ? (
-                                        <><i className="fas fa-spinner fa-spin mr-2"></i> Processing...</>
-                                    ) : (
-                                        'Proceed to Checkout'
-                                    )}
+                                    Proceed to Checkout
                                 </button>
                                 
                                 <div className="mt-4 text-center">
