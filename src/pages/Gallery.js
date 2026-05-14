@@ -12,6 +12,9 @@ const Gallery = () => {
     const [currentImage, setCurrentImage] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
 
+    // Base URL for images (your backend server)
+    const IMAGE_BASE_URL = 'http://localhost:5000';
+
     const categories = [
         { id: 'all', name: 'All Work' },
         { id: 'nails', name: 'Nail Art' },
@@ -40,6 +43,7 @@ const Gallery = () => {
     const fetchGallery = async () => {
         try {
             const response = await api.get('/gallery');
+            console.log('Gallery data from API:', response.data);
             setGalleryItems(response.data);
         } catch (error) {
             console.error('Failed to fetch gallery:', error);
@@ -61,6 +65,24 @@ const Gallery = () => {
         } else {
             setFilteredItems(galleryItems.filter(item => item.category === activeCategory));
         }
+    };
+
+    // Function to get correct image URL
+    const getImageUrl = (imageUrl) => {
+        if (!imageUrl) return null;
+        
+        // If it's already a full URL (starts with http), return as is
+        if (imageUrl.startsWith('http')) {
+            return imageUrl;
+        }
+        
+        // If it's a local path (starts with /uploads), prepend base URL
+        if (imageUrl.startsWith('/uploads')) {
+            return `${IMAGE_BASE_URL}${imageUrl}`;
+        }
+        
+        // Otherwise, assume it's a local path
+        return `${IMAGE_BASE_URL}/uploads/gallery/${imageUrl}`;
     };
 
     const openLightbox = (index) => {
@@ -120,12 +142,12 @@ const Gallery = () => {
     return (
         <>
             <Helmet>
-                <title>Gallery | Crazy Nails</title>
+                <title>Gallery | Crazy Nails & Lashes</title>
                 <meta name="description" content="Explore our portfolio of nail art, eyelash extensions, and beauty transformations. See why we're the preferred choice for premium beauty services." />
             </Helmet>
 
             {/* Page Header */}
-            <section className="page-header bg-gradient-to-r from-dark to-dark-light text-white py-28 text-center mt-20 relative overflow-hidden">
+            <section className="bg-gradient-to-r from-dark to-dark-light text-white py-28 text-center mt-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-black/50"></div>
                 <div className="container mx-auto px-4 max-w-7xl relative z-10">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Our Work Gallery</h1>
@@ -165,32 +187,42 @@ const Gallery = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {filteredItems.map((item, index) => (
-                                <div
-                                    key={item.id}
-                                    className="group relative rounded-2xl overflow-hidden cursor-pointer bg-light dark:bg-dark-light aspect-square"
-                                    onClick={() => openLightbox(index)}
-                                >
-                                    {item.image_url ? (
-                                        <img
-                                            src={`${item.image_url}?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80`}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <i className="fas fa-image text-5xl text-primary"></i>
+                            {filteredItems.map((item, index) => {
+                                const imageUrl = getImageUrl(item.image_url);
+                                console.log(`Image ${item.id} URL:`, imageUrl);
+                                
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="group relative rounded-2xl overflow-hidden cursor-pointer bg-light dark:bg-dark-light aspect-square"
+                                        onClick={() => openLightbox(index)}
+                                    >
+                                        {imageUrl ? (
+                                            <img
+                                                src={imageUrl}
+                                                alt={item.title}
+                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                onError={(e) => {
+                                                    console.error(`Failed to load image: ${imageUrl}`);
+                                                    e.target.style.display = 'none';
+                                                    e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center"><i class="fas fa-image text-5xl text-primary"></i></div>';
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                                <i className="fas fa-image text-5xl text-primary"></i>
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5">
+                                            <span className="text-white text-xs bg-primary px-2 py-1 rounded-full inline-block w-fit mb-2">
+                                                {categoryDisplayNames[item.category] || item.category}
+                                            </span>
+                                            <h4 className="text-white font-semibold mb-1">{item.title}</h4>
+                                            <p className="text-white/80 text-sm">{item.description}</p>
                                         </div>
-                                    )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-5">
-                                        <span className="text-white text-xs bg-primary px-2 py-1 rounded-full inline-block w-fit mb-2">
-                                            {categoryDisplayNames[item.category] || item.category}
-                                        </span>
-                                        <h4 className="text-white font-semibold mb-1">{item.title}</h4>
-                                        <p className="text-white/80 text-sm">{item.description}</p>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 
@@ -306,8 +338,7 @@ const Gallery = () => {
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Inspired by Our Work?</h2>
                     <p className="text-white/90 text-lg mb-8">Book an appointment to get your own beautiful transformation</p>
-                    {/* <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Your Appointment Now</Link> */}
-                    <Link to="/booking" className="btn-book">Book Your Appointment Now</Link>
+                    <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Your Appointment Now</Link>
                 </div>
             </section>
 
@@ -325,9 +356,12 @@ const Gallery = () => {
                     </button>
                     <div className="max-w-4xl w-full mx-4">
                         <img 
-                            src={`${currentImage.image_url}?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80`} 
+                            src={getImageUrl(currentImage.image_url)}
                             alt={currentImage.title}
                             className="w-full h-auto rounded-2xl"
+                            onError={(e) => {
+                                e.target.src = 'https://via.placeholder.com/800x600?text=Image+Not+Found';
+                            }}
                         />
                         <div className="mt-4 text-center">
                             <h3 className="text-white text-xl font-semibold mb-2">{currentImage.title}</h3>
