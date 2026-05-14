@@ -24,6 +24,7 @@ const AdminDashboard = () => {
         { path: '/admin/services', name: 'Services', icon: 'fa-spa' },
         { path: '/admin/products', name: 'Products', icon: 'fa-box' },
         { path: '/admin/bookings', name: 'Bookings', icon: 'fa-calendar' },
+        { path: '/admin/orders', name: 'Orders', icon: 'fa-truck' },  // Add this
         { path: '/admin/gallery', name: 'Gallery', icon: 'fa-images' },
         { path: '/admin/users', name: 'Users', icon: 'fa-users' },
         { path: '/admin/settings', name: 'Settings', icon: 'fa-cog' }
@@ -69,17 +70,16 @@ const AdminDashboard = () => {
                                 <h3 className="font-semibold">{user?.name}</h3>
                                 <p className="text-primary text-sm">Administrator</p>
                             </div>
-                            
+
                             <nav className="space-y-1">
                                 {navItems.map(item => (
                                     <Link
                                         key={item.path}
                                         to={item.path}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                                            location.pathname === item.path
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${location.pathname === item.path
                                                 ? 'bg-gradient-to-r from-primary to-secondary text-white'
                                                 : 'text-dark dark:text-white hover:bg-light dark:hover:bg-dark-light'
-                                        }`}
+                                            }`}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
                                         <span>{item.name}</span>
@@ -87,7 +87,7 @@ const AdminDashboard = () => {
                                 ))}
                             </nav>
                         </aside>
-                        
+
                         {/* Main Content */}
                         <main className="flex-1">
                             <Routes>

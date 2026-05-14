@@ -34,6 +34,7 @@ import MyLearning from './pages/MyLearning';
 import MyCertificates from './pages/MyCertificates';
 import CoursePlayer from './pages/CoursePlayer';
 import MyOrders from './pages/MyOrders';
+import OrderTracking from './pages/OrderTracking';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -84,6 +85,7 @@ function App() {
                                             <Route path="/profile" element={<Profile />} />
                                             <Route path="/my-bookings" element={<MyBookings />} />
                                             <Route path="/my-orders" element={<MyOrders />} />
+                                            <Route path="/order-tracking/:id" element={<OrderTracking />} />
                                         </Route>
 
                                         {/* Shopping & Checkout */}
@@ -104,7 +106,6 @@ function App() {
                                         </Route>
 
                                         {/* ========== 404 NOT FOUND ROUTE ========== */}
-                                        {/* Add this as the last route */}
                                         <Route path="*" element={<NotFound />} />
                                     </Routes>
                                 </main>

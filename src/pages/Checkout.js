@@ -57,7 +57,7 @@ const Checkout = () => {
 
     const handleRazorpayPayment = async (orderData, razorpayOrder) => {
         const options = {
-            key: 'rzp_test_SopdXdHuNv7R6x', // Replace with your Razorpay Test Key
+            key: 'rzp_test_SotNYgu7LVeM0h', // Replace with your Razorpay Test Key
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             name: 'Crazy Nails & Lashes',
