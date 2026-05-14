@@ -952,3 +952,65 @@
   fill: #fff !important;
   stroke: #d4a574 !important;
 }
+
+/* ===== MODAL Z-INDEX FIXES ===== */
+
+/* Ensure modals appear above everything */
+.modal,
+.admin-modal,
+.fixed.inset-0.bg-black\/50,
+.fixed.inset-0.bg-black\/70 {
+  z-index: 9999 !important;
+}
+
+/* Modal content */
+.modal-content,
+.admin-modal-content,
+.fixed.inset-0 .bg-white,
+.fixed.inset-0 .dark\:bg-dark {
+  z-index: 10000 !important;
+  position: relative;
+}
+
+/* Modal overlay */
+.modal-overlay,
+.admin-modal-overlay {
+  z-index: 9998 !important;
+}
+
+/* Ensure header doesn't overlap modals */
+header {
+  z-index: 1000;
+}
+
+/* Admin header specifically */
+.admin-header {
+  z-index: 100 !important;
+}
+
+/* When modal is open, disable body scroll */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* High z-index for dropdowns */
+.dropdown-menu,
+.group-hover\:visible {
+  z-index: 1001 !important;
+}
+
+/* Fix for React Portal modals */
+.ReactModalPortal,
+.ReactModal__Overlay {
+  z-index: 9999 !important;
+}
+
+/* Toast notifications */
+.notification {
+  z-index: 10001 !important;
+}
+
+/* WhatsApp float button */
+.whatsapp-float {
+  z-index: 1000 !important;
+}

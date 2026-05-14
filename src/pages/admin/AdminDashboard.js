@@ -14,6 +14,7 @@ import AdminOrders from './AdminOrders';
 import AdminGallery from './AdminGallery';
 import AdminUsers from './AdminUsers';
 import AdminSettings from './AdminSettings';
+import AdminFranchise from './AdminFranchise';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -40,14 +41,15 @@ const AdminDashboard = () => {
         { path: '/admin/orders', name: 'Orders', icon: 'fa-truck', mobileIcon: 'fa-shopping-cart' },
         { path: '/admin/gallery', name: 'Gallery', icon: 'fa-images', mobileIcon: 'fa-image' },
         { path: '/admin/users', name: 'Users', icon: 'fa-users', mobileIcon: 'fa-user' },
+        { path: '/admin/franchise', name: 'Franchise', icon: 'fa-store', mobileIcon: 'fa-store' },
         { path: '/admin/settings', name: 'Settings', icon: 'fa-cog', mobileIcon: 'fa-sliders-h' }
+
     ];
 
     useEffect(() => {
         fetchAllStats();
     }, []);
 
-    // Close mobile menu on route change
     useEffect(() => {
         setMobileMenuOpen(false);
     }, [location.pathname]);
@@ -55,38 +57,105 @@ const AdminDashboard = () => {
     const fetchAllStats = async () => {
         try {
             setLoading(true);
-            
-            const [bookingsRes, ordersRes, productsRes, usersRes] = await Promise.all([
-                api.get('/bookings'),
-                api.get('/orders/admin/all'),
-                api.get('/products'),
-                api.get('/auth/users')
-            ]);
-            
-            const bookings = bookingsRes.data;
-            const orders = ordersRes.data;
-            const products = productsRes.data;
-            const users = usersRes.data;
-            
-            const totalRevenue = orders.reduce((sum, o) => sum + (o.payment_status === 'success' ? o.total_amount : 0), 0);
-            
+
+            // Fetch all data in parallel with error handling for each
+            let bookings = [];
+            let orders = [];
+            let products = [];
+            let users = [];
+
+            try {
+                const bookingsRes = await api.get('/bookings');
+                bookings = bookingsRes.data;
+            } catch (error) {
+                console.error('Failed to fetch bookings:', error);
+            }
+
+            try {
+                const ordersRes = await api.get('/orders/admin/all');
+                orders = ordersRes.data;
+                console.log('Orders fetched:', orders.length);
+            } catch (error) {
+                console.error('Failed to fetch orders:', error);
+            }
+
+            try {
+                const productsRes = await api.get('/products');
+                products = productsRes.data;
+            } catch (error) {
+                console.error('Failed to fetch products:', error);
+            }
+
+            try {
+                const usersRes = await api.get('/auth/users');
+                users = usersRes.data;
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+            }
+
+            // Calculate total revenue from successful payments
+            const totalRevenue = orders.reduce((sum, o) => {
+                if (o.payment_status === 'success' || o.payment_status === 'completed') {
+                    return sum + (parseFloat(o.total_amount) || 0);
+                }
+                return sum;
+            }, 0);
+
+            // Prepare monthly revenue data (last 12 months)
             const monthlyRevenueMap = {};
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            // Initialize all months with 0
+            months.forEach(month => {
+                monthlyRevenueMap[month] = 0;
+            });
+
             orders.forEach(order => {
-                if (order.payment_status === 'success') {
-                    const month = new Date(order.created_at).toLocaleString('default', { month: 'short' });
-                    monthlyRevenueMap[month] = (monthlyRevenueMap[month] || 0) + order.total_amount;
+                if (order.payment_status === 'success' || order.payment_status === 'completed') {
+                    const date = new Date(order.created_at);
+                    const month = months[date.getMonth()];
+                    monthlyRevenueMap[month] = (monthlyRevenueMap[month] || 0) + (parseFloat(order.total_amount) || 0);
                 }
             });
-            const monthlyRevenue = Object.entries(monthlyRevenueMap).map(([month, revenue]) => ({ month, revenue }));
-            
-            const statusMap = {};
+
+            const monthlyRevenue = months.map(month => ({
+                month: month,
+                revenue: monthlyRevenueMap[month] || 0
+            }));
+
+            // Prepare order status distribution
+            const statusMap = {
+                pending: 0,
+                processing: 0,
+                confirmed: 0,
+                shipped: 0,
+                delivered: 0,
+                cancelled: 0
+            };
+
             orders.forEach(order => {
-                statusMap[order.order_status] = (statusMap[order.order_status] || 0) + 1;
+                const status = order.order_status;
+                if (statusMap.hasOwnProperty(status)) {
+                    statusMap[status]++;
+                }
             });
-            const orderStatusData = Object.entries(statusMap).map(([name, value]) => ({ name, value }));
-            
-            const recentOrders = orders.slice(0, 5);
-            
+
+            const orderStatusData = Object.entries(statusMap)
+                .filter(([_, value]) => value > 0)
+                .map(([name, value]) => ({ name, value }));
+
+            // Get recent orders (last 5)
+            const recentOrders = [...orders].sort((a, b) =>
+                new Date(b.created_at) - new Date(a.created_at)
+            ).slice(0, 5);
+
+            console.log('Processed stats:', {
+                totalRevenue,
+                monthlyRevenue,
+                orderStatusData,
+                recentOrdersCount: recentOrders.length
+            });
+
             setStats({
                 totalBookings: bookings.length,
                 pendingBookings: bookings.filter(b => b.status === 'pending').length,
@@ -135,10 +204,8 @@ const AdminDashboard = () => {
 
                     <div className="flex flex-col lg:flex-row gap-6">
                         {/* Sidebar - Desktop */}
-                        <aside className={`lg:w-64 bg-white dark:bg-dark rounded-2xl shadow-soft p-4 h-fit sticky top-24 transition-all duration-300 ${
-                            mobileMenuOpen ? 'block' : 'hidden lg:block'
-                        }`}>
-                            {/* Desktop Profile */}
+                        <aside className={`lg:w-64 bg-white dark:bg-dark rounded-2xl shadow-soft p-4 h-fit sticky top-24 transition-all duration-300 ${mobileMenuOpen ? 'block' : 'hidden lg:block'
+                            }`}>
                             <div className="hidden lg:block text-center mb-6 pb-4 border-b border-light-gray dark:border-gray-700">
                                 <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3">
                                     <i className="fas fa-crown text-white text-2xl"></i>
@@ -146,18 +213,16 @@ const AdminDashboard = () => {
                                 <h3 className="font-semibold">{user?.name || 'Admin'}</h3>
                                 <p className="text-primary text-sm">Administrator</p>
                             </div>
-                            
-                            {/* Navigation */}
+
                             <nav className="space-y-1">
                                 {navItems.map(item => (
                                     <Link
                                         key={item.path}
                                         to={item.path}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                                            location.pathname === item.path
-                                                ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md'
-                                                : 'text-dark dark:text-white hover:bg-light dark:hover:bg-dark-light'
-                                        }`}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${location.pathname === item.path
+                                            ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-md'
+                                            : 'text-dark dark:text-white hover:bg-light dark:hover:bg-dark-light'
+                                            }`}
                                     >
                                         <i className={`fas ${item.icon} w-5`}></i>
                                         <span>{item.name}</span>
@@ -168,7 +233,7 @@ const AdminDashboard = () => {
                                 ))}
                             </nav>
                         </aside>
-                        
+
                         {/* Main Content */}
                         <main className="flex-1 min-w-0">
                             <div className="bg-white dark:bg-dark rounded-2xl shadow-soft p-4 md:p-6">
@@ -180,6 +245,7 @@ const AdminDashboard = () => {
                                     <Route path="orders" element={<AdminOrders />} />
                                     <Route path="gallery" element={<AdminGallery />} />
                                     <Route path="users" element={<AdminUsers />} />
+                                    <Route path="franchise" element={<AdminFranchise />} />
                                     <Route path="settings" element={<AdminSettings />} />
                                 </Routes>
                             </div>

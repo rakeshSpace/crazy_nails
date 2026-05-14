@@ -13,6 +13,8 @@
     "highcharts": "^12.6.0",
     "highcharts-react-official": "^3.2.3",
     "html2pdf.js": "^0.14.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "multer": "^2.1.1",
     "razorpay": "^2.9.6",
     "react": "^19.2.6",
@@ -27,7 +29,8 @@
     "recharts": "^3.8.1",
     "slick-carousel": "^1.8.1",
     "styled-components": "^6.4.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",

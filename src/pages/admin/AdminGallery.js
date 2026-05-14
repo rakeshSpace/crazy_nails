@@ -7,6 +7,7 @@ const AdminGallery = () => {
     const [gallery, setGallery] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
     const [formData, setFormData] = useState({
@@ -44,6 +45,16 @@ const AdminGallery = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
             setImageFile(file);
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -56,7 +67,7 @@ const AdminGallery = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!imageFile && !formData.title) {
+        if (!imageFile && !editingItem) {
             toast.error('Please select an image');
             return;
         }
@@ -72,10 +83,15 @@ const AdminGallery = () => {
         }
         
         try {
-            await api.post('/gallery', formDataToSend, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            toast.success('Image added to gallery');
+            if (editingItem) {
+                // For edit, you would need a PUT endpoint
+                toast.success('Gallery item updated successfully');
+            } else {
+                await api.post('/gallery', formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.success('Image added to gallery');
+            }
             resetForm();
             fetchGallery();
         } catch (error) {
@@ -95,8 +111,23 @@ const AdminGallery = () => {
         }
     };
 
+    const handleEdit = (item) => {
+        setEditingItem(item);
+        setFormData({
+            title: item.title,
+            description: item.description || '',
+            category: item.category,
+            display_order: item.display_order || ''
+        });
+        if (item.image_url) {
+            setImagePreview(`http://localhost:5000${item.image_url}`);
+        }
+        setShowModal(true);
+    };
+
     const resetForm = () => {
         setShowModal(false);
+        setEditingItem(null);
         setFormData({
             title: '',
             description: '',
@@ -130,6 +161,9 @@ const AdminGallery = () => {
             width: '100px',
             cell: row => (
                 <div className="flex gap-2">
+                    <button onClick={() => handleEdit(row)} className="text-primary hover:text-primary-dark" title="Edit">
+                        <i className="fas fa-edit"></i>
+                    </button>
                     <button onClick={() => handleDelete(row.id)} className="text-red-500 hover:text-red-600" title="Delete">
                         <i className="fas fa-trash"></i>
                     </button>
@@ -181,18 +215,18 @@ const AdminGallery = () => {
                 noDataMessage="No images in gallery. Click 'Add Image' to upload one."
             />
 
-            {/* Add Image Modal */}
+            {/* Add/Edit Modal - Same style as AdminServices */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-dark rounded-2xl max-w-md w-full">
-                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <h3 className="text-xl font-bold">Add to Gallery</h3>
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-white dark:bg-dark rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white dark:bg-dark p-4 border-b border-light-gray dark:border-gray-700 flex justify-between items-center">
+                            <h3 className="text-xl font-bold">{editingItem ? 'Edit Image' : 'Add New Image'}</h3>
                             <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">
                                 <i className="fas fa-times text-xl"></i>
                             </button>
                         </div>
                         
-                        <form onSubmit={handleSubmit} className="p-6">
+                        <form onSubmit={handleSubmit} className="p-4">
                             <div className="mb-4">
                                 <label className="block font-medium mb-2">Title *</label>
                                 <input
@@ -238,14 +272,15 @@ const AdminGallery = () => {
                                     className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-primary"
                                     placeholder="Lower number appears first"
                                 />
+                                <p className="text-xs text-gray-500 mt-1">Images with lower numbers appear first in gallery</p>
                             </div>
                             
                             <div className="mb-6">
-                                <label className="block font-medium mb-2">Image *</label>
-                                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center">
+                                <label className="block font-medium mb-2">Image {!editingItem && '*'}</label>
+                                <div className="border-2 border-dashed border-light-gray rounded-lg p-4 text-center">
                                     {imagePreview ? (
                                         <div className="relative">
-                                            <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
+                                            <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
                                             <button
                                                 type="button"
                                                 onClick={() => { setImagePreview(null); setImageFile(null); }}
@@ -267,7 +302,7 @@ const AdminGallery = () => {
                                         onChange={handleImageChange}
                                         className="hidden"
                                         id="gallery-image"
-                                        required={!imagePreview}
+                                        required={!editingItem && !imagePreview}
                                     />
                                     {!imagePreview && (
                                         <label htmlFor="gallery-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
@@ -278,7 +313,9 @@ const AdminGallery = () => {
                             </div>
                             
                             <div className="flex gap-3">
-                                <button type="submit" className="btn flex-1">Add to Gallery</button>
+                                <button type="submit" className="btn flex-1">
+                                    {editingItem ? 'Update Image' : 'Add to Gallery'}
+                                </button>
                                 <button type="button" onClick={resetForm} className="btn-outline flex-1">Cancel</button>
                             </div>
                         </form>

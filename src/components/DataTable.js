@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const DataTable = ({
     columns,
@@ -25,6 +28,8 @@ const DataTable = ({
     const [selectedRows, setSelectedRows] = useState([]);
     const [filteredData, setFilteredData] = useState([]);
     const [isMobile, setIsMobile] = useState(false);
+    const [showExportDropdown, setShowExportDropdown] = useState(false);
+    const dropdownRef = useRef(null);
 
     // Check if mobile view
     useEffect(() => {
@@ -34,6 +39,17 @@ const DataTable = ({
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setShowExportDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -104,14 +120,36 @@ const DataTable = ({
         onSelectionChange?.(newSelected);
     };
 
-    const exportToCSV = () => {
-        const headers = columns.map(col => col.name);
-        const rows = filteredData.map(row => 
-            columns.map(col => {
+    // Get data for export (either filtered data or selected rows)
+    const getExportData = (useSelectedOnly = false) => {
+        let dataToExport = useSelectedOnly && selectedRows.length > 0 
+            ? filteredData.filter(row => selectedRows.includes(row.id))
+            : filteredData;
+        
+        return dataToExport.map(row => {
+            const exportRow = {};
+            columns.forEach(col => {
                 let value = col.selector ? col.selector(row) : row[col.name?.toLowerCase()];
-                if (typeof value === 'object') value = JSON.stringify(value);
-                return `"${value}"`;
-            }).join(',')
+                if (typeof value === 'object' && value !== null) {
+                    value = JSON.stringify(value);
+                }
+                exportRow[col.name] = value || '';
+            });
+            return exportRow;
+        });
+    };
+
+    // Export to CSV
+    const exportToCSV = () => {
+        const exportData = getExportData(false);
+        if (exportData.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        const headers = Object.keys(exportData[0]);
+        const rows = exportData.map(row => 
+            headers.map(header => `"${row[header] || ''}"`).join(',')
         );
         
         const csv = [headers.join(','), ...rows].join('\n');
@@ -122,6 +160,164 @@ const DataTable = ({
         a.download = `${exportFileName}.csv`;
         a.click();
         URL.revokeObjectURL(url);
+        setShowExportDropdown(false);
+    };
+
+    // Export to Excel (XLSX)
+    const exportToExcel = () => {
+        const exportData = getExportData(false);
+        if (exportData.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Data');
+        XLSX.writeFile(wb, `${exportFileName}.xlsx`);
+        setShowExportDropdown(false);
+    };
+
+    // Export to PDF
+    const exportToPDF = () => {
+        const exportData = getExportData(false);
+        if (exportData.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        const doc = new jsPDF('landscape');
+        
+        // Add title
+        doc.setFontSize(16);
+        doc.text(title || 'Data Export', 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 25);
+        
+        // Prepare table data
+        const headers = Object.keys(exportData[0]);
+        const rows = exportData.map(row => headers.map(header => row[header] || ''));
+        
+        doc.autoTable({
+            head: [headers],
+            body: rows,
+            startY: 35,
+            theme: 'striped',
+            headStyles: { fillColor: [212, 165, 116], textColor: [255, 255, 255] },
+            alternateRowStyles: { fillColor: [245, 245, 245] },
+        });
+        
+        doc.save(`${exportFileName}.pdf`);
+        setShowExportDropdown(false);
+    };
+
+    // Copy to clipboard
+    const copyToClipboard = async () => {
+        const exportData = getExportData(false);
+        if (exportData.length === 0) {
+            alert('No data to copy');
+            return;
+        }
+        
+        const headers = Object.keys(exportData[0]);
+        const rows = exportData.map(row => 
+            headers.map(header => row[header] || '').join('\t')
+        );
+        const text = [headers.join('\t'), ...rows].join('\n');
+        
+        try {
+            await navigator.clipboard.writeText(text);
+            alert('Data copied to clipboard!');
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            alert('Failed to copy data');
+        }
+        setShowExportDropdown(false);
+    };
+
+    // Print data
+    const printData = () => {
+        const exportData = getExportData(false);
+        if (exportData.length === 0) {
+            alert('No data to print');
+            return;
+        }
+        
+        const printWindow = window.open('', '_blank');
+        const headers = Object.keys(exportData[0]);
+        
+        let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${title || 'Data Export'}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    h1 { color: #d4a574; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #d4a574; color: white; }
+                    tr:nth-child(even) { background-color: #f9f9f9; }
+                    .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }
+                </style>
+            </head>
+            <body>
+                <h1>${title || 'Data Export'}</h1>
+                <p>Generated on: ${new Date().toLocaleString()}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            ${headers.map(h => `<th>${h}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${exportData.map(row => `
+                            <tr>
+                                ${headers.map(h => `<td>${row[h] || ''}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                <div class="footer">
+                    <p>Total Records: ${exportData.length}</p>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+        setShowExportDropdown(false);
+    };
+
+    // Export selected only
+    const exportSelected = () => {
+        if (selectedRows.length === 0) {
+            alert('No rows selected. Please select rows to export.');
+            return;
+        }
+        
+        const exportData = getExportData(true);
+        if (exportData.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        const headers = Object.keys(exportData[0]);
+        const rows = exportData.map(row => 
+            headers.map(header => `"${row[header] || ''}"`).join(',')
+        );
+        
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${exportFileName}_selected.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setShowExportDropdown(false);
     };
 
     const getSortIcon = (column) => {
@@ -131,40 +327,115 @@ const DataTable = ({
             : <i className="fas fa-sort-down text-primary ml-1"></i>;
     };
 
+    // Export options component
+    const ExportDropdown = () => (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                className="btn-outline btn-small flex items-center gap-2"
+            >
+                <i className="fas fa-download"></i> Export
+                <i className={`fas fa-chevron-${showExportDropdown ? 'up' : 'down'} text-xs`}></i>
+            </button>
+            
+            {showExportDropdown && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-dark rounded-xl shadow-lg border border-light-gray dark:border-gray-700 z-50 overflow-hidden">
+                    <div className="py-1">
+                        <button
+                            onClick={exportToCSV}
+                            className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                        >
+                            <i className="fas fa-file-csv text-green-600 w-5"></i>
+                            <span>Export as CSV</span>
+                        </button>
+                        <button
+                            onClick={exportToExcel}
+                            className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                        >
+                            <i className="fas fa-file-excel text-green-700 w-5"></i>
+                            <span>Export as Excel</span>
+                        </button>
+                        <button
+                            onClick={exportToPDF}
+                            className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                        >
+                            <i className="fas fa-file-pdf text-red-600 w-5"></i>
+                            <span>Export as PDF</span>
+                        </button>
+                        <button
+                            onClick={copyToClipboard}
+                            className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                        >
+                            <i className="fas fa-copy text-blue-600 w-5"></i>
+                            <span>Copy to Clipboard</span>
+                        </button>
+                        <button
+                            onClick={printData}
+                            className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                        >
+                            <i className="fas fa-print text-gray-600 w-5"></i>
+                            <span>Print</span>
+                        </button>
+                        
+                        {selectable && selectedRows.length > 0 && (
+                            <>
+                                <div className="border-t border-light-gray dark:border-gray-700 my-1"></div>
+                                <button
+                                    onClick={exportSelected}
+                                    className="w-full px-4 py-2 text-left hover:bg-light dark:hover:bg-dark-light flex items-center gap-3 transition-colors"
+                                >
+                                    <i className="fas fa-check-square text-primary w-5"></i>
+                                    <span>Export Selected ({selectedRows.length})</span>
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+
     // Mobile card view
     const MobileCardView = () => (
-        <div className="space-y-3">
-            {currentItems.map((row, idx) => (
-                <div
-                    key={idx}
-                    onClick={() => onRowClick?.(row)}
-                    onDoubleClick={() => onRowDoubleClick?.(row)}
-                    className="bg-white dark:bg-dark-light rounded-xl p-4 border border-light-gray dark:border-gray-700 shadow-sm"
-                >
-                    {columns.map((column, colIdx) => (
-                        <div key={colIdx} className="flex justify-between py-2 border-b border-light-gray dark:border-gray-700 last:border-0">
-                            <span className="font-medium text-gray-600 dark:text-gray-400 text-sm">{column.name}:</span>
-                            <span className="text-dark dark:text-white text-sm">
-                                {column.cell ? column.cell(row) : (column.selector ? column.selector(row) : row[column.name?.toLowerCase()])}
-                            </span>
-                        </div>
-                    ))}
-                    {selectable && (
-                        <div className="mt-3 pt-2 border-t border-light-gray dark:border-gray-700">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedRows.includes(row.id)}
-                                    onChange={() => handleSelectRow(row.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="w-4 h-4 rounded"
-                                />
-                                <span className="text-sm text-gray">Select this item</span>
-                            </label>
-                        </div>
-                    )}
+        <div className="space-y-3 p-4">
+            {currentItems.length === 0 ? (
+                <div className="text-center py-12">
+                    <i className="fas fa-inbox text-4xl text-gray-300 mb-2"></i>
+                    <p className="text-gray">{noDataMessage}</p>
                 </div>
-            ))}
+            ) : (
+                currentItems.map((row, idx) => (
+                    <div
+                        key={idx}
+                        onClick={() => onRowClick?.(row)}
+                        onDoubleClick={() => onRowDoubleClick?.(row)}
+                        className="bg-white dark:bg-dark-light rounded-xl p-4 border border-light-gray dark:border-gray-700 shadow-sm"
+                    >
+                        {columns.map((column, colIdx) => (
+                            <div key={colIdx} className="flex justify-between py-2 border-b border-light-gray dark:border-gray-700 last:border-0">
+                                <span className="font-medium text-gray-600 dark:text-gray-400 text-sm">{column.name}:</span>
+                                <span className="text-dark dark:text-white text-sm">
+                                    {column.cell ? column.cell(row) : (column.selector ? column.selector(row) : row[column.name?.toLowerCase()])}
+                                </span>
+                            </div>
+                        ))}
+                        {selectable && (
+                            <div className="mt-3 pt-2 border-t border-light-gray dark:border-gray-700">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedRows.includes(row.id)}
+                                        onChange={() => handleSelectRow(row.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-4 h-4 rounded"
+                                    />
+                                    <span className="text-sm text-gray">Select this item</span>
+                                </label>
+                            </div>
+                        )}
+                    </div>
+                ))
+            )}
         </div>
     );
 
@@ -184,6 +455,7 @@ const DataTable = ({
                     {title && <h3 className="text-lg font-semibold">{title}</h3>}
                     <p className="text-sm text-gray mt-1">
                         Total {filteredData.length} records found
+                        {selectedRows.length > 0 && ` | ${selectedRows.length} selected`}
                     </p>
                 </div>
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
@@ -199,11 +471,7 @@ const DataTable = ({
                             />
                         </div>
                     )}
-                    {exportable && (
-                        <button onClick={exportToCSV} className="btn-outline btn-small">
-                            <i className="fas fa-download mr-2"></i> Export
-                        </button>
-                    )}
+                    {exportable && <ExportDropdown />}
                     {actions}
                 </div>
             </div>

@@ -26,6 +26,7 @@ import Cart from './pages/Cart';
 import Courses from './pages/Courses';
 import CourseDetails from './pages/CourseDetails';
 import VerifyCertificate from './pages/VerifyCertificate';
+import Franchise from './pages/Franchise';  // <--- ADD THIS
 
 // Protected Pages (Requires Login)
 import Profile from './pages/Profile';
@@ -37,8 +38,10 @@ import CoursePlayer from './pages/CoursePlayer';
 import MyOrders from './pages/MyOrders';
 import OrderTracking from './pages/OrderTracking';
 
+
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminFranchise from './pages/admin/AdminFranchise';  // <--- ADD THIS
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute';
@@ -93,6 +96,9 @@ function App() {
 
                                     {/* Certificate Verification (Public) */}
                                     <Route path="/verify/:code" element={<VerifyCertificate />} />
+
+                                    {/* Franchise Page (Public) */}
+                                    <Route path="/franchise" element={<Franchise />} />  {/* <--- ADD THIS */}
 
                                     {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
                                     {/* User Profile & Account */}
