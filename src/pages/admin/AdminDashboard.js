@@ -207,8 +207,12 @@ const AdminDashboard = () => {
                         <aside className={`lg:w-64 bg-white dark:bg-dark rounded-2xl shadow-soft p-4 h-fit sticky top-24 transition-all duration-300 ${mobileMenuOpen ? 'block' : 'hidden lg:block'
                             }`}>
                             <div className="hidden lg:block text-center mb-6 pb-4 border-b border-light-gray dark:border-gray-700">
-                                <div className="w-16 h-16 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <i className="fas fa-crown text-white text-2xl"></i>
+                                <div className="flex justify-center">
+                                    <img
+                                        src="/logo.png"
+                                        alt="Crazy Nails Logo"
+                                        className="h-16 w-auto object-contain"
+                                    />
                                 </div>
                                 <h3 className="font-semibold">{user?.name || 'Admin'}</h3>
                                 <p className="text-primary text-sm">Administrator</p>
