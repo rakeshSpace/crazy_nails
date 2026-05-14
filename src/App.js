@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { HelmetProvider } from 'react-helmet-async';
 
@@ -11,6 +11,7 @@ import { CartProvider } from './contexts/CartContext';
 // Layout Components
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
+import AdminFooter from './components/Layout/AdminFooter';
 
 // Public Pages
 import Home from './pages/Home';
@@ -45,6 +46,22 @@ import ProtectedRoute from './components/ProtectedRoute';
 // Styles
 import './styles/globals.css';
 
+// Layout wrapper to conditionally show footer
+const Layout = ({ children }) => {
+    const location = useLocation();
+    const isAdminRoute = location.pathname.startsWith('/admin');
+    
+    return (
+        <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-grow">
+                {children}
+            </main>
+            {isAdminRoute ? <AdminFooter /> : <Footer />}
+        </div>
+    );
+};
+
 function App() {
     return (
         <HelmetProvider>
@@ -52,65 +69,61 @@ function App() {
                 <AuthProvider>
                     <CartProvider>
                         <Router>
-                            <div className="min-h-screen flex flex-col">
-                                <Header />
-                                <main className="flex-grow">
-                                    <Routes>
-                                        {/* ========== PUBLIC ROUTES ========== */}
-                                        {/* Main Pages */}
-                                        <Route path="/" element={<Home />} />
-                                        <Route path="/services" element={<Services />} />
-                                        <Route path="/products" element={<Products />} />
-                                        <Route path="/gallery" element={<Gallery />} />
-                                        <Route path="/about" element={<About />} />
-                                        <Route path="/booking" element={<Booking />} />
+                            <Layout>
+                                <Routes>
+                                    {/* ========== PUBLIC ROUTES ========== */}
+                                    {/* Main Pages */}
+                                    <Route path="/" element={<Home />} />
+                                    <Route path="/services" element={<Services />} />
+                                    <Route path="/products" element={<Products />} />
+                                    <Route path="/gallery" element={<Gallery />} />
+                                    <Route path="/about" element={<About />} />
+                                    <Route path="/booking" element={<Booking />} />
 
-                                        {/* Auth Pages */}
-                                        <Route path="/login" element={<Login />} />
-                                        <Route path="/register" element={<Register />} />
+                                    {/* Auth Pages */}
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
 
-                                        {/* Shopping */}
-                                        <Route path="/cart" element={<Cart />} />
+                                    {/* Shopping */}
+                                    <Route path="/cart" element={<Cart />} />
 
-                                        {/* Training & Courses */}
-                                        <Route path="/courses" element={<Courses />} />
-                                        <Route path="/courses/:slug" element={<CourseDetails />} />
+                                    {/* Training & Courses */}
+                                    <Route path="/courses" element={<Courses />} />
+                                    <Route path="/courses/:slug" element={<CourseDetails />} />
 
-                                        {/* Certificate Verification (Public) */}
-                                        <Route path="/verify/:code" element={<VerifyCertificate />} />
+                                    {/* Certificate Verification (Public) */}
+                                    <Route path="/verify/:code" element={<VerifyCertificate />} />
 
-                                        {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
-                                        {/* User Profile & Account */}
-                                        <Route element={<ProtectedRoute />}>
-                                            <Route path="/profile" element={<Profile />} />
-                                            <Route path="/my-bookings" element={<MyBookings />} />
-                                            <Route path="/my-orders" element={<MyOrders />} />
-                                            <Route path="/order-tracking/:id" element={<OrderTracking />} />
-                                        </Route>
+                                    {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
+                                    {/* User Profile & Account */}
+                                    <Route element={<ProtectedRoute />}>
+                                        <Route path="/profile" element={<Profile />} />
+                                        <Route path="/my-bookings" element={<MyBookings />} />
+                                        <Route path="/my-orders" element={<MyOrders />} />
+                                        <Route path="/order-tracking/:id" element={<OrderTracking />} />
+                                    </Route>
 
-                                        {/* Shopping & Checkout */}
-                                        <Route element={<ProtectedRoute />}>
-                                            <Route path="/checkout" element={<Checkout />} />
-                                        </Route>
+                                    {/* Shopping & Checkout */}
+                                    <Route element={<ProtectedRoute />}>
+                                        <Route path="/checkout" element={<Checkout />} />
+                                    </Route>
 
-                                        {/* Learning Management System */}
-                                        <Route element={<ProtectedRoute />}>
-                                            <Route path="/my-learning" element={<MyLearning />} />
-                                            <Route path="/my-certificates" element={<MyCertificates />} />
-                                            <Route path="/course/learn/:courseId" element={<CoursePlayer />} />
-                                        </Route>
+                                    {/* Learning Management System */}
+                                    <Route element={<ProtectedRoute />}>
+                                        <Route path="/my-learning" element={<MyLearning />} />
+                                        <Route path="/my-certificates" element={<MyCertificates />} />
+                                        <Route path="/course/learn/:courseId" element={<CoursePlayer />} />
+                                    </Route>
 
-                                        {/* ========== ADMIN ROUTES (Requires Admin Role) ========== */}
-                                        <Route element={<ProtectedRoute adminOnly />}>
-                                            <Route path="/admin/*" element={<AdminDashboard />} />
-                                        </Route>
+                                    {/* ========== ADMIN ROUTES (Requires Admin Role) ========== */}
+                                    <Route element={<ProtectedRoute adminOnly />}>
+                                        <Route path="/admin/*" element={<AdminDashboard />} />
+                                    </Route>
 
-                                        {/* ========== 404 NOT FOUND ROUTE ========== */}
-                                        <Route path="*" element={<NotFound />} />
-                                    </Routes>
-                                </main>
-                                <Footer />
-                            </div>
+                                    {/* ========== 404 NOT FOUND ROUTE ========== */}
+                                    <Route path="*" element={<NotFound />} />
+                                </Routes>
+                            </Layout>
                             <Toaster
                                 position="top-right"
                                 toastOptions={{
