@@ -15,6 +15,7 @@ import AdminGallery from './AdminGallery';
 import AdminUsers from './AdminUsers';
 import AdminSettings from './AdminSettings';
 import AdminFranchise from './AdminFranchise';
+import AdminTransformations from './AdminTransformations';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -42,6 +43,7 @@ const AdminDashboard = () => {
         { path: '/admin/gallery', name: 'Gallery', icon: 'fa-images', mobileIcon: 'fa-image' },
         { path: '/admin/users', name: 'Users', icon: 'fa-users', mobileIcon: 'fa-user' },
         { path: '/admin/franchise', name: 'Franchise', icon: 'fa-store', mobileIcon: 'fa-store' },
+        { path: '/admin/transformations', name: 'Transformations', icon: 'fa-sync', mobileIcon: 'fa-sync-alt' },
         { path: '/admin/settings', name: 'Settings', icon: 'fa-cog', mobileIcon: 'fa-sliders-h' }
 
     ];
@@ -250,6 +252,7 @@ const AdminDashboard = () => {
                                     <Route path="gallery" element={<AdminGallery />} />
                                     <Route path="users" element={<AdminUsers />} />
                                     <Route path="franchise" element={<AdminFranchise />} />
+                                    <Route path="transformations" element={<AdminTransformations />} />
                                     <Route path="settings" element={<AdminSettings />} />
                                 </Routes>
                             </div>

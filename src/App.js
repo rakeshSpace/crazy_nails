@@ -26,7 +26,7 @@ import Cart from './pages/Cart';
 import Courses from './pages/Courses';
 import CourseDetails from './pages/CourseDetails';
 import VerifyCertificate from './pages/VerifyCertificate';
-import Franchise from './pages/Franchise';  // <--- ADD THIS
+import Franchise from './pages/Franchise';  
 
 // Protected Pages (Requires Login)
 import Profile from './pages/Profile';
@@ -41,7 +41,7 @@ import OrderTracking from './pages/OrderTracking';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminFranchise from './pages/admin/AdminFranchise';  // <--- ADD THIS
+import AdminFranchise from './pages/admin/AdminFranchise'; 
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute';
@@ -53,7 +53,7 @@ import './styles/globals.css';
 const Layout = ({ children }) => {
     const location = useLocation();
     const isAdminRoute = location.pathname.startsWith('/admin');
-    
+
     return (
         <div className="min-h-screen flex flex-col">
             <Header />

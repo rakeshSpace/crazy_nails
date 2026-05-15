@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { Helmet } from 'react-helmet-async';
 
@@ -11,6 +11,8 @@ const Gallery = () => {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [currentImage, setCurrentImage] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [transformations, setTransformations] = useState([]);
+    const [transformationsLoading, setTransformationsLoading] = useState(true);
 
     // Base URL for images (your backend server)
     const IMAGE_BASE_URL = 'http://localhost:5000';
@@ -67,20 +69,58 @@ const Gallery = () => {
         }
     };
 
+    useEffect(() => {
+        fetchTransformations();
+    }, []);
+
+    // Add this function to fetch transformations
+    const fetchTransformations = async () => {
+        try {
+            const response = await api.get('/transformations?limit=2');
+            console.log('Transformations data:', response.data);
+            setTransformations(response.data);
+        } catch (error) {
+            console.error('Failed to fetch transformations:', error);
+            // Fallback mock data
+            setTransformations([
+                {
+                    id: 1,
+                    title: 'Nail Extension Transformation',
+                    description: 'Client received gel nail extensions with intricate floral nail art design.',
+                    before_image: null,
+                    after_image: null,
+                    category: 'nails',
+                    tags: ['Gel Extensions', 'Nail Art', 'French Tips']
+                },
+                {
+                    id: 2,
+                    title: 'Eyelash Extension Transformation',
+                    description: 'Volume eyelash extensions applied for a dramatic, eye-opening effect.',
+                    before_image: null,
+                    after_image: null,
+                    category: 'lashes',
+                    tags: ['Volume Lashes', 'Eye Enhancement']
+                }
+            ]);
+        } finally {
+            setTransformationsLoading(false);
+        }
+    };
+
     // Function to get correct image URL
     const getImageUrl = (imageUrl) => {
         if (!imageUrl) return null;
-        
+
         // If it's already a full URL (starts with http), return as is
         if (imageUrl.startsWith('http')) {
             return imageUrl;
         }
-        
+
         // If it's a local path (starts with /uploads), prepend base URL
         if (imageUrl.startsWith('/uploads')) {
             return `${IMAGE_BASE_URL}${imageUrl}`;
         }
-        
+
         // Otherwise, assume it's a local path
         return `${IMAGE_BASE_URL}/uploads/gallery/${imageUrl}`;
     };
@@ -163,11 +203,10 @@ const Gallery = () => {
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`px-5 py-2 rounded-full font-medium transition-all ${
-                                    activeCategory === cat.id
-                                        ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-medium'
-                                        : 'bg-white dark:bg-dark-light text-dark dark:text-white border border-light-gray dark:border-gray-700 hover:border-primary'
-                                }`}
+                                className={`px-5 py-2 rounded-full font-medium transition-all ${activeCategory === cat.id
+                                    ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-medium'
+                                    : 'bg-white dark:bg-dark-light text-dark dark:text-white border border-light-gray dark:border-gray-700 hover:border-primary'
+                                    }`}
                             >
                                 {cat.name}
                             </button>
@@ -190,7 +229,7 @@ const Gallery = () => {
                             {filteredItems.map((item, index) => {
                                 const imageUrl = getImageUrl(item.image_url);
                                 console.log(`Image ${item.id} URL:`, imageUrl);
-                                
+
                                 return (
                                     <div
                                         key={item.id}
@@ -245,64 +284,81 @@ const Gallery = () => {
                         <h2 className="text-2xl md:text-3xl font-bold">Transformations</h2>
                         <p>See the amazing before and after results from our beauty treatments</p>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-                        {/* Before/After 1 */}
-                        <div className="bg-white dark:bg-dark rounded-2xl overflow-hidden shadow-soft">
-                            <div className="grid grid-cols-2">
-                                <div className="p-6 text-center border-r border-light-gray dark:border-gray-700">
-                                    <h4 className="font-semibold mb-4">Before</h4>
-                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl flex flex-col items-center justify-center">
-                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                        <p className="text-gray text-sm mb-0">Natural nails</p>
-                                    </div>
-                                </div>
-                                <div className="p-6 text-center">
-                                    <h4 className="font-semibold mb-4">After</h4>
-                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl flex flex-col items-center justify-center">
-                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                        <p className="text-gray text-sm mb-0">Gel extensions with nail art</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-6 border-t border-light-gray dark:border-gray-700">
-                                <h3 className="font-bold mb-2">Nail Extension Transformation</h3>
-                                <p className="text-gray text-sm mb-3">Client received gel nail extensions with intricate floral nail art design.</p>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">Gel Extensions</span>
-                                    <span className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">Nail Art</span>
-                                    <span className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">French Tips</span>
-                                </div>
-                            </div>
-                        </div>
 
-                        {/* Before/After 2 */}
-                        <div className="bg-white dark:bg-dark rounded-2xl overflow-hidden shadow-soft">
-                            <div className="grid grid-cols-2">
-                                <div className="p-6 text-center border-r border-light-gray dark:border-gray-700">
-                                    <h4 className="font-semibold mb-4">Before</h4>
-                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl flex flex-col items-center justify-center">
-                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                        <p className="text-gray text-sm mb-0">Natural eyelashes</p>
-                                    </div>
-                                </div>
-                                <div className="p-6 text-center">
-                                    <h4 className="font-semibold mb-4">After</h4>
-                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl flex flex-col items-center justify-center">
-                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                        <p className="text-gray text-sm mb-0">Volume eyelash extensions</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="p-6 border-t border-light-gray dark:border-gray-700">
-                                <h3 className="font-bold mb-2">Eyelash Extension Transformation</h3>
-                                <p className="text-gray text-sm mb-3">Volume eyelash extensions applied for a dramatic, eye-opening effect.</p>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">Volume Lashes</span>
-                                    <span className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">Eye Enhancement</span>
-                                </div>
-                            </div>
+                    {transformationsLoading ? (
+                        <div className="flex justify-center py-12">
+                            <div className="loading-spinner"></div>
                         </div>
-                    </div>
+                    ) : transformations.length === 0 ? (
+                        <div className="text-center py-12">
+                            <i className="fas fa-images text-5xl text-gray-300 mb-4"></i>
+                            <p className="text-gray">No transformations available yet.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                            {transformations.map(transformation => (
+                                <div key={transformation.id} className="bg-white dark:bg-dark rounded-2xl overflow-hidden shadow-soft hover:shadow-medium transition-all">
+                                    <div className="grid grid-cols-2">
+                                        {/* Before Image */}
+                                        <div className="p-6 text-center border-r border-light-gray dark:border-gray-700">
+                                            <h4 className="font-semibold mb-4">Before</h4>
+                                            <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
+                                                {transformation.before_image ? (
+                                                    <img
+                                                        src={`http://localhost:5000${transformation.before_image}`}
+                                                        alt="Before"
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'https://via.placeholder.com/300x300?text=Before+Image';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
+                                                        <p className="text-gray text-sm mb-0">Before image</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* After Image */}
+                                        <div className="p-6 text-center">
+                                            <h4 className="font-semibold mb-4">After</h4>
+                                            <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
+                                                {transformation.after_image ? (
+                                                    <img
+                                                        src={`http://localhost:5000${transformation.after_image}`}
+                                                        alt="After"
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.src = 'https://via.placeholder.com/300x300?text=After+Image';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center">
+                                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
+                                                        <p className="text-gray text-sm mb-0">After image</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 border-t border-light-gray dark:border-gray-700">
+                                        <h3 className="font-bold mb-2">{transformation.title}</h3>
+                                        <p className="text-gray text-sm mb-3">{transformation.description}</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {transformation.tags && transformation.tags.map((tag, idx) => (
+                                                <span key={idx} className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -355,7 +411,7 @@ const Gallery = () => {
                         <i className="fas fa-chevron-right"></i>
                     </button>
                     <div className="max-w-4xl w-full mx-4">
-                        <img 
+                        <img
                             src={getImageUrl(currentImage.image_url)}
                             alt={currentImage.title}
                             className="w-full h-auto rounded-2xl"
