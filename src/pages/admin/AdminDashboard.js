@@ -7,6 +7,8 @@ import toast from 'react-hot-toast';
 
 // Admin Components
 import AdminStats from './AdminStats';
+import AdminHeroSlider from './AdminHeroSlider';
+import AdminTestimonials from './AdminTestimonials';
 import AdminServices from './AdminServices';
 import AdminProducts from './AdminProducts';
 import AdminBookings from './AdminBookings';
@@ -16,6 +18,8 @@ import AdminUsers from './AdminUsers';
 import AdminSettings from './AdminSettings';
 import AdminFranchise from './AdminFranchise';
 import AdminTransformations from './AdminTransformations';
+import AdminOffers from './AdminOffers';
+import AdminBulkOffers from './AdminBulkOffers';
 
 const AdminDashboard = () => {
     const { user } = useAuth();
@@ -36,6 +40,10 @@ const AdminDashboard = () => {
 
     const navItems = [
         { path: '/admin', name: 'Dashboard', icon: 'fa-chart-line', mobileIcon: 'fa-tachometer-alt' },
+        { path: '/admin/hero', name: 'Hero Slider', icon: 'fa-images' },
+        { path: '/admin/testimonials', name: 'Testimonials', icon: 'fa-comments', mobileIcon: 'fa-comments' },
+        { path: '/admin/offers', name: 'Offers', icon: 'fa-tag', mobileIcon: 'fa-tag' },
+        { path: '/admin/bulk-offers', name: 'Bulk Offers', icon: 'fa-layer-group', mobileIcon: 'fa-layer-group' },
         { path: '/admin/services', name: 'Services', icon: 'fa-spa', mobileIcon: 'fa-spa' },
         { path: '/admin/products', name: 'Products', icon: 'fa-box', mobileIcon: 'fa-box' },
         { path: '/admin/bookings', name: 'Bookings', icon: 'fa-calendar', mobileIcon: 'fa-calendar-alt' },
@@ -246,6 +254,10 @@ const AdminDashboard = () => {
                                 <Routes>
                                     <Route index element={<AdminStats stats={stats} loading={loading} />} />
                                     <Route path="services" element={<AdminServices />} />
+                                    <Route path="hero" element={<AdminHeroSlider />} />
+                                    <Route path="testimonials" element={<AdminTestimonials />} />
+                                    <Route path="offers" element={<AdminOffers />} />
+                                    <Route path="bulk-offers" element={<AdminBulkOffers />} />
                                     <Route path="products" element={<AdminProducts />} />
                                     <Route path="bookings" element={<AdminBookings />} />
                                     <Route path="orders" element={<AdminOrders />} />

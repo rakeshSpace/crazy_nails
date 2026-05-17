@@ -1014,3 +1014,196 @@ body.modal-open {
 .whatsapp-float {
   z-index: 1000 !important;
 }
+
+
+/* Amazon-style Product Card Enhancements */
+.group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+}
+
+/* Price styling */
+.product-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.current-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.original-price {
+    font-size: 0.875rem;
+    color: var(--gray);
+    text-decoration: line-through;
+}
+
+.discount-badge {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    display: inline-block;
+}
+
+/* Offer timer */
+.offer-timer {
+    font-size: 0.7rem;
+    color: #e74c3c;
+    margin-top: 4px;
+}
+
+/* Rating stars */
+.rating-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+}
+
+.rating-stars i {
+    font-size: 0.8rem;
+}
+
+.rating-stars .filled {
+    color: #ffc107;
+}
+
+.rating-stars .half-filled {
+    color: #ffc107;
+    position: relative;
+}
+
+.rating-stars .empty {
+    color: #e4e5e9;
+}
+
+/* Card hover effects */
+.service-card:hover .service-image,
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.service-image,
+.product-image {
+    transition: transform 0.5s ease;
+}
+
+/* Slick Carousel Custom Styles */
+.slick-slider {
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+.slick-list {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.slick-track {
+    position: relative;
+    top: 0;
+    left: 0;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.slick-slide {
+    display: none;
+    float: left;
+    height: 100%;
+    min-height: 1px;
+}
+
+.slick-slide > div {
+    display: flex;
+    height: 100%;
+}
+
+.slick-initialized .slick-slide {
+    display: block;
+}
+
+/* Dots Styling */
+.slick-dots {
+    position: absolute;
+    bottom: -40px;
+    display: flex !important;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.slick-dots li {
+    margin: 0 4px;
+}
+
+.slick-dots li button {
+    font-size: 0;
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border-radius: 50%;
+    background-color: #e0e0e0;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.slick-dots li.slick-active button {
+    background-color: #d4a574;
+    width: 24px;
+    border-radius: 5px;
+}
+
+.slick-dots li button:before {
+    display: none;
+}
+
+/* Hide default arrows */
+.slick-prev, .slick-next {
+    display: none !important;
+}
+
+/* Line clamp for testimonials text */
+.line-clamp-4 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Danger Button Animation */
+.btn-danger {
+    background-color: #dc2626;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.btn-danger:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
