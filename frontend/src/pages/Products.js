@@ -133,7 +133,7 @@ const Products = () => {
 
     const handleAddToCart = async (product) => {
         await addToCart(product.id, 1);
-        toast.success(`${product.name} added to cart!`);
+        // toast.success(`${product.name} added to cart!`);
     };
 
     if (loading) {

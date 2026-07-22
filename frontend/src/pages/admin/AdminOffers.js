@@ -1,5 +1,3 @@
-// frontend/src/pages/admin/AdminOffers.js
-
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -205,17 +203,22 @@ const AdminOffers = () => {
 
         return (
             <div key={item.id} className="bg-white dark:bg-dark rounded-xl p-4 shadow-soft hover:shadow-medium transition-all group">
-                <div className="flex gap-4">
-                    <div className="w-20 h-20 bg-accent rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                {/* ONLY RESPONSIVE CHANGE: flex-col on mobile, flex-row on desktop */}
+                <div className="flex flex-col md:flex-row gap-4">
+                    {/* Image - responsive sizing */}
+                    <div className="w-full md:w-20 h-32 md:h-20 bg-accent rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
                         {item.image_url ? (
                             <img src={`http://localhost:5000${item.image_url}`} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
-                            <i className="fas fa-spa text-2xl text-primary"></i>
+                            <i className="fas fa-spa text-3xl md:text-2xl text-primary"></i>
                         )}
                     </div>
 
-                    <div className="flex-1">
-                        <h4 className="font-semibold text-dark dark:text-white">{item.name}</h4>
+                    {/* Content - takes remaining space */}
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-dark dark:text-white text-base md:text-lg truncate">{item.name}</h4>
+                        
+                        {/* Status badges - wrap on mobile */}
                         <div className="flex items-center gap-2 mt-1 flex-wrap">
                             {item.is_on_offer ? (
                                 <>
@@ -240,12 +243,13 @@ const AdminOffers = () => {
                             )}
                         </div>
 
+                        {/* Price section - responsive */}
                         {item.is_on_offer && item.original_price ? (
-                            <div className="mt-2">
+                            <div className="mt-2 flex flex-wrap items-center gap-2">
                                 <span className="text-primary font-bold text-lg">₹{item.price}</span>
-                                <span className="text-gray line-through text-sm ml-2">₹{item.original_price}</span>
+                                <span className="text-gray line-through text-sm">₹{item.original_price}</span>
                                 {item.discount_percent > 0 && (
-                                    <span className="text-green-600 text-xs ml-2">Save {item.discount_percent}%</span>
+                                    <span className="text-green-600 text-xs">Save {item.discount_percent}%</span>
                                 )}
                             </div>
                         ) : (
@@ -254,23 +258,27 @@ const AdminOffers = () => {
                             </div>
                         )}
 
+                        {/* Offer expiry */}
                         {item.is_on_offer && item.offer_end_date && (
-                            <div className={`mt-2 text-xs flex items-center gap-1 ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}`}>
+                            <div className={`mt-2 text-xs flex flex-wrap items-center gap-1 ${daysLeft <= 3 ? 'text-red-500' : 'text-gray-500'}`}>
                                 <i className="far fa-calendar-alt"></i>
                                 <span>Valid until: {new Date(item.offer_end_date).toLocaleDateString('en-GB')}</span>
                                 {daysLeft <= 7 && daysLeft > 0 && (
-                                    <span className="ml-2 font-semibold">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
+                                    <span className="font-semibold">({daysLeft} day{daysLeft !== 1 ? 's' : ''} left)</span>
                                 )}
                             </div>
                         )}
                     </div>
 
-                    <button
-                        onClick={() => handleEdit(item, type)}
-                        className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all flex items-center gap-1 text-sm"
-                    >
-                        <i className="fas fa-edit"></i> {item.is_on_offer ? 'Edit Offer' : 'Add Offer'}
-                    </button>
+                    {/* Action button - full width on mobile */}
+                    <div className="w-full md:w-auto mt-3 md:mt-0">
+                        <button
+                            onClick={() => handleEdit(item, type)}
+                            className="w-full md:w-auto px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all flex items-center justify-center gap-1 text-sm"
+                        >
+                            <i className="fas fa-edit"></i> {item.is_on_offer ? 'Edit Offer' : 'Add Offer'}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -296,11 +304,12 @@ const AdminOffers = () => {
     const currentItems = activeTab === 'products' ? filteredProducts : filteredServices;
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Manage Offers & Discounts</h2>
+        <div className="overflow-x-hidden">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold">Manage Offers & Discounts</h2>
             </div>
 
+            {/* Stats Cards - Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-4">
                     <div className="flex items-center justify-between">
@@ -331,33 +340,39 @@ const AdminOffers = () => {
                 </div>
             </div>
 
+            {/* Tabs - Responsive */}
             <div className="flex flex-wrap gap-2 mb-6 border-b">
                 <button
                     onClick={() => setActiveTab('products')}
-                    className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${activeTab === 'products'
+                    className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${
+                        activeTab === 'products'
                             ? 'text-primary border-b-2 border-primary'
                             : 'text-gray hover:text-primary'
-                        }`}
+                    }`}
                 >
-                    <i className="fas fa-box"></i> Products
+                    <i className="fas fa-box"></i> 
+                    <span>Products</span>
                     <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                         {products.length}
                     </span>
                 </button>
                 <button
                     onClick={() => setActiveTab('services')}
-                    className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${activeTab === 'services'
+                    className={`px-4 py-2 font-medium transition-all flex items-center gap-2 ${
+                        activeTab === 'services'
                             ? 'text-primary border-b-2 border-primary'
                             : 'text-gray hover:text-primary'
-                        }`}
+                    }`}
                 >
-                    <i className="fas fa-spa"></i> Services
+                    <i className="fas fa-spa"></i> 
+                    <span>Services</span>
                     <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                         {services.length}
                     </span>
                 </button>
             </div>
 
+            {/* Filters - Responsive */}
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                 <div className="flex flex-wrap gap-3">
                     <div className="relative">
@@ -367,7 +382,7 @@ const AdminOffers = () => {
                             placeholder="Search by name or badge..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:border-primary w-64"
+                            className="pl-9 pr-4 py-2 border rounded-lg focus:outline-none focus:border-primary w-48 sm:w-64"
                         />
                     </div>
 
@@ -394,8 +409,9 @@ const AdminOffers = () => {
                     )}
                 </div>
 
+                {/* Bulk Actions - Responsive */}
                 {currentItems.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => handleBulkAction('activate')}
                             className="px-3 py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
@@ -429,12 +445,13 @@ const AdminOffers = () => {
                 </div>
             )}
 
+            {/* Modal - Responsive */}
             {showModal && editingItem && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-dark rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white dark:bg-dark p-4 border-b flex justify-between items-center">
-                            <h3 className="text-xl font-bold">Manage Offer: {editingItem.name}</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700">
+                            <h3 className="text-xl font-bold truncate">Manage Offer: {editingItem.name}</h3>
+                            <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 p-1">
                                 <i className="fas fa-times text-xl"></i>
                             </button>
                         </div>
