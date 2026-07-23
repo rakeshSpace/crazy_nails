@@ -4,6 +4,9 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
     const currentYear = new Date().getFullYear();
 
+    // Google Maps URL for the address
+    const googleMapsUrl = "https://maps.app.goo.gl/6NaGWaMgQYsRR8eS7";
+
     return (
         <footer className="bg-gradient-to-r from-dark to-dark-light text-white pt-16 pb-4 mt-auto">
             <div className="container mx-auto px-4 max-w-7xl">
@@ -33,18 +36,18 @@ const Footer = () => {
                             Your premier destination for premium beauty and wellness services in the heart of the city.
                         </p>
                         <div className="flex gap-3">
-                            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                            <a href="https://www.facebook.com/people/Crazy-Nails-Kammanahalli/61584643677666/?locale=ga_IE#" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center ">
                                 <i className="fab fa-facebook-f"></i>
                             </a>
-                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                            <a href="https://www.instagram.com/crazy.nails_2727/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center ">
                                 <i className="fab fa-instagram"></i>
                             </a>
-                            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                            {/* <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center ">
                                 <i className="fab fa-twitter"></i>
-                            </a>
-                            <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center hover:bg-primary transition-all">
+                            </a> */}
+                            {/* <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center">
                                 <i className="fab fa-pinterest"></i>
-                            </a>
+                            </a> */}
                         </div>
                     </div>
 
@@ -78,9 +81,17 @@ const Footer = () => {
                     <div>
                         <h4 className="text-lg font-semibold mb-4 relative pb-2 after:absolute after:bottom-0 after:left-0 after:w-10 after:h-0.5 after:bg-primary">Contact Info</h4>
                         <ul className="space-y-3">
+                            {/* Address - Clickable Google Maps Link */}
                             <li className="flex gap-3 text-white/70">
                                 <i className="fas fa-map-marker-alt text-primary mt-1"></i>
-                                <span>Beauty Parlour Street, City Center</span>
+                                <a 
+                                    href={googleMapsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-primary transition-colors"
+                                >
+                                    45, 2nd Cross Rd, opposite to Simon Burgers, near Venkateswara Garments, Ramaiah Layout, Kammanahalli, Bengaluru, Karnataka 560084
+                                </a>
                             </li>
                             <li className="flex gap-3 text-white/70">
                                 <i className="fas fa-phone-alt text-primary mt-1"></i>

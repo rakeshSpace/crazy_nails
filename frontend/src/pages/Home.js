@@ -491,7 +491,7 @@ const Home = () => {
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Ready for Your Beauty Transformation?</h2>
                     <p className="text-white/90 text-lg mb-8">Book your appointment today and experience the Crazy Nails difference</p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">
+                        <Link to="/booking" className="btn bg-white  hover:bg-accent">
                             <i className="fas fa-calendar-check mr-2"></i> Book Now
                         </Link>
                         <a

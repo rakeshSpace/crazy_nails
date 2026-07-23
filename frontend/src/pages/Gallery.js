@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { Helmet } from 'react-helmet-async';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 const Gallery = () => {
     const [galleryItems, setGalleryItems] = useState([]);
@@ -33,6 +36,71 @@ const Gallery = () => {
         { number: '50+', label: 'Nail Art Awards' },
         { number: '100%', label: 'Client Satisfaction' }
     ];
+
+    // Slider settings for transformations - FULLY RESPONSIVE
+    const transformationSliderSettings = {
+        dots: true,
+        infinite: transformations.length > 1,
+        speed: 500,
+        slidesToShow: 2,       
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 4000,
+        pauseOnHover: true,
+        arrows: true,
+        adaptiveHeight: true,
+        centerMode: false,
+        responsive: [
+            {
+                breakpoint: 1024,
+                settings: {
+                    slidesToShow: 2,
+                    slidesToScroll: 1,
+                    arrows: true,
+                    dots: true,
+                }
+            },
+            {
+                breakpoint: 768,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    arrows: false,
+                    dots: true,
+                    centerMode: false,
+                }
+            },
+            {
+                breakpoint: 480,
+                settings: {
+                    slidesToShow: 1,
+                    slidesToScroll: 1,
+                    arrows: false,
+                    dots: true,
+                    centerMode: false,
+                }
+            }
+        ]
+    };
+
+    // Custom arrows for transformation slider
+    const PrevArrow = ({ onClick }) => (
+        <button
+            onClick={onClick}
+            className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-dark rounded-full shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 hidden md:flex"
+        >
+            <i className="fas fa-chevron-left text-sm"></i>
+        </button>
+    );
+
+    const NextArrow = ({ onClick }) => (
+        <button
+            onClick={onClick}
+            className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white dark:bg-dark rounded-full shadow-md flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 hidden md:flex"
+        >
+            <i className="fas fa-chevron-right text-sm"></i>
+        </button>
+    );
 
     useEffect(() => {
         fetchGallery();
@@ -76,12 +144,55 @@ const Gallery = () => {
     // Add this function to fetch transformations
     const fetchTransformations = async () => {
         try {
-            const response = await api.get('/transformations?limit=2');
+            const response = await api.get('/transformations?limit=10');
             console.log('Transformations data:', response.data);
-            setTransformations(response.data);
+            // If API returns data, use it, otherwise use mock data
+            if (response.data && response.data.length > 0) {
+                setTransformations(response.data);
+            } else {
+                // Fallback mock data with multiple transformations
+                setTransformations([
+                    {
+                        id: 1,
+                        title: 'Nail Extension Transformation',
+                        description: 'Client received gel nail extensions with intricate floral nail art design.',
+                        before_image: null,
+                        after_image: null,
+                        category: 'nails',
+                        tags: ['Gel Extensions', 'Nail Art', 'French Tips']
+                    },
+                    {
+                        id: 2,
+                        title: 'Eyelash Extension Transformation',
+                        description: 'Volume eyelash extensions applied for a dramatic, eye-opening effect.',
+                        before_image: null,
+                        after_image: null,
+                        category: 'lashes',
+                        tags: ['Volume Lashes', 'Eye Enhancement']
+                    },
+                    {
+                        id: 3,
+                        title: 'Manicure & Pedicure Transformation',
+                        description: 'Complete hand and foot care treatment with premium products.',
+                        before_image: null,
+                        after_image: null,
+                        category: 'manicure',
+                        tags: ['Manicure', 'Pedicure', 'Spa Treatment']
+                    },
+                    {
+                        id: 4,
+                        title: 'Facial & Skin Transformation',
+                        description: 'Rejuvenating facial treatment for glowing, healthy skin.',
+                        before_image: null,
+                        after_image: null,
+                        category: 'facials',
+                        tags: ['Facial', 'Skin Care', 'Glowing Skin']
+                    }
+                ]);
+            }
         } catch (error) {
             console.error('Failed to fetch transformations:', error);
-            // Fallback mock data
+            // Fallback mock data with multiple transformations
             setTransformations([
                 {
                     id: 1,
@@ -100,6 +211,24 @@ const Gallery = () => {
                     after_image: null,
                     category: 'lashes',
                     tags: ['Volume Lashes', 'Eye Enhancement']
+                },
+                {
+                    id: 3,
+                    title: 'Manicure & Pedicure Transformation',
+                    description: 'Complete hand and foot care treatment with premium products.',
+                    before_image: null,
+                    after_image: null,
+                    category: 'manicure',
+                    tags: ['Manicure', 'Pedicure', 'Spa Treatment']
+                },
+                {
+                    id: 4,
+                    title: 'Facial & Skin Transformation',
+                    description: 'Rejuvenating facial treatment for glowing, healthy skin.',
+                    before_image: null,
+                    after_image: null,
+                    category: 'facials',
+                    tags: ['Facial', 'Skin Care', 'Glowing Skin']
                 }
             ]);
         } finally {
@@ -171,6 +300,14 @@ const Gallery = () => {
         facials: 'Facials'
     };
 
+    // Get transformation image URL
+    const getTransformationImageUrl = (imageUrl) => {
+        if (!imageUrl) return null;
+        if (imageUrl.startsWith('http')) return imageUrl;
+        if (imageUrl.startsWith('/uploads')) return `${IMAGE_BASE_URL}${imageUrl}`;
+        return `${IMAGE_BASE_URL}/uploads/transformations/${imageUrl}`;
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -182,7 +319,7 @@ const Gallery = () => {
     return (
         <>
             <Helmet>
-                <title>Gallery | Crazy Nails & Lashes</title>
+                <title>Gallery | Crazy Nails</title>
                 <meta name="description" content="Explore our portfolio of nail art, eyelash extensions, and beauty transformations. See why we're the preferred choice for premium beauty services." />
             </Helmet>
 
@@ -295,68 +432,103 @@ const Gallery = () => {
                             <p className="text-gray">No transformations available yet.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-                            {transformations.map(transformation => (
-                                <div key={transformation.id} className="bg-white dark:bg-dark rounded-2xl overflow-hidden shadow-soft hover:shadow-medium transition-all">
-                                    <div className="grid grid-cols-2">
-                                        {/* Before Image */}
-                                        <div className="p-6 text-center border-r border-light-gray dark:border-gray-700">
-                                            <h4 className="font-semibold mb-4">Before</h4>
-                                            <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
-                                                {transformation.before_image ? (
-                                                    <img
-                                                        src={`http://localhost:5000${transformation.before_image}`}
-                                                        alt="Before"
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src = 'https://via.placeholder.com/300x300?text=Before+Image';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center">
-                                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                                        <p className="text-gray text-sm mb-0">Before image</p>
+                        <div className="mt-8 relative px-2 sm:px-4 md:px-8">
+                            <Slider 
+                                {...transformationSliderSettings}
+                                prevArrow={<PrevArrow />}
+                                nextArrow={<NextArrow />}
+                            >
+                                {transformations.map((transformation) => (
+                                    <div key={transformation.id} className="px-2 md:px-3">
+                                        <div className="bg-white dark:bg-dark rounded-2xl overflow-hidden shadow-soft hover:shadow-medium transition-all h-full">
+                                            <div className="grid grid-cols-2">
+                                                {/* Before Image */}
+                                                <div className="p-3 md:p-5 text-center border-r border-light-gray dark:border-gray-700">
+                                                    <h4 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">Before</h4>
+                                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
+                                                        {transformation.before_image ? (
+                                                            <img
+                                                                src={getTransformationImageUrl(transformation.before_image)}
+                                                                alt="Before"
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.target.src = 'https://via.placeholder.com/300x300?text=Before';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center">
+                                                                <i className="fas fa-image text-2xl md:text-4xl text-primary mb-1 md:mb-2"></i>
+                                                                <p className="text-gray text-xs md:text-sm mb-0">Before</p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
+                                                </div>
 
-                                        {/* After Image */}
-                                        <div className="p-6 text-center">
-                                            <h4 className="font-semibold mb-4">After</h4>
-                                            <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
-                                                {transformation.after_image ? (
-                                                    <img
-                                                        src={`http://localhost:5000${transformation.after_image}`}
-                                                        alt="After"
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.src = 'https://via.placeholder.com/300x300?text=After+Image';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center">
-                                                        <i className="fas fa-image text-4xl text-primary mb-3"></i>
-                                                        <p className="text-gray text-sm mb-0">After image</p>
+                                                {/* After Image */}
+                                                <div className="p-3 md:p-5 text-center">
+                                                    <h4 className="font-semibold mb-2 md:mb-3 text-xs md:text-sm">After</h4>
+                                                    <div className="aspect-square bg-accent dark:bg-primary/20 rounded-xl overflow-hidden">
+                                                        {transformation.after_image ? (
+                                                            <img
+                                                                src={getTransformationImageUrl(transformation.after_image)}
+                                                                alt="After"
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.target.src = 'https://via.placeholder.com/300x300?text=After';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center">
+                                                                <i className="fas fa-image text-2xl md:text-4xl text-primary mb-1 md:mb-2"></i>
+                                                                <p className="text-gray text-xs md:text-sm mb-0">After</p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                </div>
+                                            </div>
+
+                                            <div className="p-3 md:p-5 border-t border-light-gray dark:border-gray-700">
+                                                <h3 className="font-bold mb-1 md:mb-2 text-sm md:text-lg">{transformation.title}</h3>
+                                                <p className="text-gray text-xs md:text-sm mb-2 md:mb-3 line-clamp-2">{transformation.description}</p>
+                                                <div className="flex flex-wrap gap-1 md:gap-2">
+                                                    {transformation.tags && transformation.tags.map((tag, idx) => (
+                                                        <span key={idx} className="text-[10px] md:text-xs bg-accent dark:bg-primary/20 text-primary px-2 md:px-3 py-0.5 md:py-1 rounded-full">
+                                                            {tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    <div className="p-6 border-t border-light-gray dark:border-gray-700">
-                                        <h3 className="font-bold mb-2">{transformation.title}</h3>
-                                        <p className="text-gray text-sm mb-3">{transformation.description}</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {transformation.tags && transformation.tags.map((tag, idx) => (
-                                                <span key={idx} className="text-xs bg-accent dark:bg-primary/20 text-primary px-3 py-1 rounded-full">
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </Slider>
+                            
+                            {/* Custom Dots Styling */}
+                            <style jsx>{`
+                                .slick-dots {
+                                    bottom: -40px !important;
+                                }
+                                .slick-dots li button:before {
+                                    font-size: 10px !important;
+                                    color: #CBD5E1 !important;
+                                    opacity: 1 !important;
+                                }
+                                .slick-dots li.slick-active button:before {
+                                    color: #C8A165 !important;
+                                    opacity: 1 !important;
+                                }
+                                @media (max-width: 767px) {
+                                    .slick-dots {
+                                        bottom: -35px !important;
+                                    }
+                                    .slick-dots li button:before {
+                                        font-size: 12px !important;
+                                    }
+                                    .slick-dots li.slick-active button:before {
+                                        font-size: 14px !important;
+                                    }
+                                }
+                            `}</style>
                         </div>
                     )}
                 </div>
@@ -376,14 +548,14 @@ const Gallery = () => {
                                     <i className="fas fa-heart text-3xl text-primary group-hover:scale-110 transition-transform"></i>
                                 </div>
                                 <div className="absolute inset-0 bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                                    <span className="text-white text-sm font-medium">@crazynails</span>
+                                    <span className="text-white text-sm font-medium">@crazy.nails_2727</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                     <div className="text-center mt-8">
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-medium transition-all">
-                            <i className="fab fa-instagram"></i> Follow @crazynailsandlashes
+                        <a href="https://www.instagram.com/crazy.nails_2727/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-medium transition-all">
+                            <i className="fab fa-instagram"></i> Follow @crazy.nails_2727
                         </a>
                     </div>
                 </div>
@@ -394,7 +566,7 @@ const Gallery = () => {
                 <div className="container mx-auto px-4 max-w-4xl">
                     <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">Inspired by Our Work?</h2>
                     <p className="text-white/90 text-lg mb-8">Book an appointment to get your own beautiful transformation</p>
-                    <Link to="/booking" className="btn bg-white text-primary hover:bg-accent">Book Your Appointment Now</Link>
+                    <Link to="/booking" className="btn bg-white  hover:bg-accent">Book Your Appointment Now</Link>
                 </div>
             </section>
 

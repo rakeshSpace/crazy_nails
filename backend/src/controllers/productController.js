@@ -161,21 +161,11 @@ const updateProduct = async (req, res) => {
         const { id } = req.params;
         const {
             name, category, description, price, original_price, stock_quantity,
-            badge, is_featured, rating, is_on_offer, discount_percent, offer_badge, offer_end_date
+            badge, is_featured, rating, is_on_offer, discount_percent, offer_badge, offer_end_date,
+            remove_image
         } = req.body;
 
-        let image_url = null;
-        if (req.file) {
-            image_url = `/uploads/products/${req.file.filename}`;
-
-            const [current] = await db.execute('SELECT image_url FROM products WHERE id = ?', [id]);
-            if (current[0]?.image_url) {
-                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
-                }
-            }
-        }
+        console.log('Updating product with remove_image:', remove_image);
 
         // Safe value conversion - FIXED
         const safeBoolean = (val) => {
@@ -216,6 +206,42 @@ const updateProduct = async (req, res) => {
         const finalStockQuantity = safeNumber(stock_quantity) || 0;
         const finalBadge = safeString(badge);
 
+        // Handle main image logic
+        let image_url = null;
+        let shouldUpdateImage = false;
+
+        // Check if user wants to remove main image
+        if (remove_image === 'true' || remove_image === true) {
+            // Get current image to delete it
+            const [current] = await db.execute('SELECT image_url FROM products WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old main image:', oldImagePath);
+                }
+            }
+            image_url = null;
+            shouldUpdateImage = true;
+            console.log('Main image removal requested - will set image_url to NULL');
+        }
+        // Check if new main image is uploaded
+        else if (req.file) {
+            image_url = `/uploads/products/${req.file.filename}`;
+            shouldUpdateImage = true;
+
+            // Delete old image if exists
+            const [current] = await db.execute('SELECT image_url FROM products WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old main image:', oldImagePath);
+                }
+            }
+            console.log('New main image uploaded:', image_url);
+        }
+
         let query = `UPDATE products SET 
             name = ?, 
             category = ?, 
@@ -247,13 +273,17 @@ const updateProduct = async (req, res) => {
             finalOfferEndDate
         ];
 
-        if (image_url) {
+        // Add image_url to query if we need to update it
+        if (shouldUpdateImage) {
             query += ', image_url = ? WHERE id = ?';
             values.push(image_url, id);
         } else {
             query += ' WHERE id = ?';
             values.push(id);
         }
+
+        console.log('Executing query:', query);
+        console.log('Values:', values);
 
         const [result] = await db.execute(query, values);
 
@@ -269,6 +299,7 @@ const updateProduct = async (req, res) => {
 
 const deleteProduct = async (req, res) => {
     try {
+        // Get main product image
         const [current] = await db.execute('SELECT image_url FROM products WHERE id = ?', [req.params.id]);
         if (current[0]?.image_url) {
             const imagePath = path.join(__dirname, '../../', current[0].image_url);
@@ -277,7 +308,23 @@ const deleteProduct = async (req, res) => {
             }
         }
 
+        // Get and delete additional images
+        const [additionalImages] = await db.execute('SELECT image_url FROM product_images WHERE product_id = ?', [req.params.id]);
+        for (const img of additionalImages) {
+            if (img.image_url) {
+                const imagePath = path.join(__dirname, '../../', img.image_url);
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            }
+        }
+
+        // Soft delete product
         await db.execute('UPDATE products SET is_active = 0 WHERE id = ?', [req.params.id]);
+        
+        // Delete additional images records
+        await db.execute('DELETE FROM product_images WHERE product_id = ?', [req.params.id]);
+
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         console.error('Delete product error:', error);
@@ -417,7 +464,7 @@ const markReviewHelpful = async (req, res) => {
     }
 };
 
-// ============ PRODUCT IMAGES FUNCTIONS (ONLY ONCE) ============
+// ============ PRODUCT IMAGES FUNCTIONS ============
 const getProductImages = async (req, res) => {
     try {
         const { id } = req.params;

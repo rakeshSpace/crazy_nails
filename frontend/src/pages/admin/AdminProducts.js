@@ -12,6 +12,7 @@ const AdminProducts = () => {
     const [editingProduct, setEditingProduct] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [productImages, setProductImages] = useState([]);
     const [uploadingImages, setUploadingImages] = useState(false);
     const [pendingReviews, setPendingReviews] = useState([]);
@@ -73,12 +74,19 @@ const AdminProducts = () => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
+            setRemoveImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
     };
 
     const handleMultipleImagesChange = async (e) => {
@@ -216,8 +224,23 @@ const AdminProducts = () => {
             }
         });
 
-        if (imageFile) {
-            formDataToSend.append('image', imageFile);
+        // Handle image for edit mode
+        if (editingProduct) {
+            if (removeImage) {
+                // User wants to remove the main image
+                formDataToSend.append('remove_image', 'true');
+                console.log('Main image removal requested');
+            } else if (imageFile) {
+                // User uploaded a new main image
+                formDataToSend.append('image', imageFile);
+                console.log('New main image uploaded');
+            }
+            // If neither, keep existing main image
+        } else {
+            // New product - main image is optional
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            }
         }
 
         try {
@@ -255,7 +278,7 @@ const AdminProducts = () => {
         }
     };
 
-    // FIXED: Function to format date without timezone offset
+    // Function to format date without timezone offset
     const formatDateForInput = (dateString) => {
         if (!dateString) return '';
 
@@ -279,13 +302,13 @@ const AdminProducts = () => {
     const handleEdit = async (product) => {
         console.log('Editing product:', product);
         setEditingProduct(product);
+        setRemoveImage(false);
 
         await fetchProductImages(product.id);
 
         const isOfferActive = product.is_on_offer === 1;
         const isFeaturedActive = product.is_featured === 1;
 
-        // FIXED: Use the formatDateForInput function to handle date correctly
         const formattedEndDate = formatDateForInput(product.offer_end_date);
 
         setFormData({
@@ -306,8 +329,10 @@ const AdminProducts = () => {
 
         if (product.image_url) {
             setImagePreview(`http://localhost:5000${product.image_url}`);
+            setImageFile(null);
         } else {
             setImagePreview(null);
+            setImageFile(null);
         }
         setShowModal(true);
     };
@@ -333,6 +358,7 @@ const AdminProducts = () => {
         });
         setImagePreview(null);
         setImageFile(null);
+        setRemoveImage(false);
     };
 
     const columns = [
@@ -381,7 +407,6 @@ const AdminProducts = () => {
             name: 'Valid Till',
             selector: row => {
                 if (!row.offer_end_date) return '-';
-                // FIXED: Format date as dd/mm/yyyy
                 const date = new Date(row.offer_end_date);
                 if (isNaN(date.getTime())) return '-';
                 const day = String(date.getDate()).padStart(2, '0');
@@ -650,11 +675,12 @@ const AdminProducts = () => {
                                             <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
                                             <button
                                                 type="button"
-                                                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                             >
                                                 <i className="fas fa-times text-xs"></i>
                                             </button>
+                                            <p className="text-xs text-gray">Click × to remove image</p>
                                         </div>
                                     ) : (
                                         <>
@@ -671,7 +697,7 @@ const AdminProducts = () => {
                                         id="product-image"
                                     />
                                     {!imagePreview && (
-                                        <label htmlFor="product-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                        <label htmlFor="product-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                             Choose Image
                                         </label>
                                     )}

@@ -12,6 +12,7 @@ const AdminServices = () => {
     const [editingService, setEditingService] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         category: 'nails',
@@ -57,12 +58,19 @@ const AdminServices = () => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
+            setRemoveImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
     };
 
     const calculateDiscountedPrice = (originalPrice, discountPercent) => {
@@ -149,8 +157,23 @@ const AdminServices = () => {
             }
         });
         
-        if (imageFile) {
-            formDataToSend.append('image', imageFile);
+        // Handle image for edit mode
+        if (editingService) {
+            if (removeImage) {
+                // User wants to remove the image
+                formDataToSend.append('remove_image', 'true');
+                console.log('Image removal requested');
+            } else if (imageFile) {
+                // User uploaded a new image
+                formDataToSend.append('image', imageFile);
+                console.log('New image uploaded');
+            }
+            // If neither, keep existing image
+        } else {
+            // New service - image is optional
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            }
         }
         
         try {
@@ -206,6 +229,7 @@ const AdminServices = () => {
     const handleEdit = (service) => {
         console.log('Original service data from API:', service);
         setEditingService(service);
+        setRemoveImage(false);
         
         const isOfferActive = service.is_on_offer === 1;
         
@@ -227,8 +251,10 @@ const AdminServices = () => {
         
         if (service.image_url) {
             setImagePreview(`http://localhost:5000${service.image_url}`);
+            setImageFile(null);
         } else {
             setImagePreview(null);
+            setImageFile(null);
         }
         setShowModal(true);
     };
@@ -251,6 +277,7 @@ const AdminServices = () => {
         });
         setImagePreview(null);
         setImageFile(null);
+        setRemoveImage(false);
     };
 
     const columns = [
@@ -517,11 +544,12 @@ const AdminServices = () => {
                                             <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
                                             <button
                                                 type="button"
-                                                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                             >
                                                 <i className="fas fa-times text-xs"></i>
                                             </button>
+                                            <p className="text-xs text-gray">Click × to remove image</p>
                                         </div>
                                     ) : (
                                         <>
@@ -538,7 +566,7 @@ const AdminServices = () => {
                                         id="service-image"
                                     />
                                     {!imagePreview && (
-                                        <label htmlFor="service-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                        <label htmlFor="service-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                             Choose Image
                                         </label>
                                     )}

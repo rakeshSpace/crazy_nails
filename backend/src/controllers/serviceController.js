@@ -120,27 +120,14 @@ const updateService = async (req, res) => {
         const {
             name, category, description, price, original_price,
             discount_percent, offer_badge, offer_end_date, is_on_offer,
-            duration, display_order, is_active
+            duration, display_order, is_active, remove_image
         } = req.body;
 
         console.log('Updating service with data:', {
             id, name, category, price, original_price,
             discount_percent, offer_badge, offer_end_date, is_on_offer,
-            duration, display_order, is_active
+            duration, display_order, is_active, remove_image
         });
-
-        let image_url = null;
-        if (req.file) {
-            image_url = `/uploads/services/${req.file.filename}`;
-            
-            const [current] = await db.execute('SELECT image_url FROM services WHERE id = ?', [id]);
-            if (current[0]?.image_url) {
-                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
-                if (fs.existsSync(oldImagePath)) {
-                    fs.unlinkSync(oldImagePath);
-                }
-            }
-        }
 
         // Safe value conversion
         const safeString = (val) => (val && val !== 'undefined' && val !== 'null' ? val : null);
@@ -188,6 +175,43 @@ const updateService = async (req, res) => {
         const finalIsActive = safeBoolean(is_active);
         const finalIsActiveValue = finalIsActive === 0 ? 0 : 1;
 
+        // Handle image logic
+        let image_url = null;
+        let shouldUpdateImage = false;
+
+        // Check if user wants to remove image
+        if (remove_image === 'true' || remove_image === true) {
+            // Get current image to delete it
+            const [current] = await db.execute('SELECT image_url FROM services WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old image:', oldImagePath);
+                }
+            }
+            image_url = null;
+            shouldUpdateImage = true;
+            console.log('Image removal requested - will set image_url to NULL');
+        } 
+        // Check if new image is uploaded
+        else if (req.file) {
+            image_url = `/uploads/services/${req.file.filename}`;
+            shouldUpdateImage = true;
+            
+            // Delete old image if exists
+            const [current] = await db.execute('SELECT image_url FROM services WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old image:', oldImagePath);
+                }
+            }
+            console.log('New image uploaded:', image_url);
+        }
+
+        // Build the update query
         let query = `UPDATE services SET 
             name = ?, 
             category = ?, 
@@ -217,7 +241,8 @@ const updateService = async (req, res) => {
             finalIsActiveValue
         ];
 
-        if (image_url) {
+        // Add image_url to query if we need to update it
+        if (shouldUpdateImage) {
             query += ', image_url = ? WHERE id = ?';
             values.push(image_url, id);
         } else {

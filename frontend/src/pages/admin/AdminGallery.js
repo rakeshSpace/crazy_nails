@@ -10,6 +10,7 @@ const AdminGallery = () => {
     const [editingItem, setEditingItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -56,6 +57,7 @@ const AdminGallery = () => {
                 return;
             }
             setImageFile(file);
+            setRemoveImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -64,10 +66,17 @@ const AdminGallery = () => {
         }
     };
 
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!imageFile && !editingItem) {
+        // For new item, image is required
+        if (!editingItem && !imageFile) {
             toast.error('Please select an image');
             return;
         }
@@ -78,13 +87,30 @@ const AdminGallery = () => {
         formDataToSend.append('category', formData.category);
         formDataToSend.append('display_order', formData.display_order || 0);
         
-        if (imageFile) {
-            formDataToSend.append('image', imageFile);
+        // Handle image for edit mode
+        if (editingItem) {
+            if (removeImage) {
+                // User wants to remove the image
+                formDataToSend.append('remove_image', 'true');
+                console.log('Gallery image removal requested');
+            } else if (imageFile) {
+                // User uploaded a new image
+                formDataToSend.append('image', imageFile);
+                console.log('New gallery image uploaded');
+            }
+            // If neither, keep existing image
+        } else {
+            // New gallery item - image is required
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            }
         }
         
         try {
             if (editingItem) {
-                // For edit, you would need a PUT endpoint
+                await api.put(`/gallery/${editingItem.id}`, formDataToSend, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
                 toast.success('Gallery item updated successfully');
             } else {
                 await api.post('/gallery', formDataToSend, {
@@ -95,7 +121,8 @@ const AdminGallery = () => {
             resetForm();
             fetchGallery();
         } catch (error) {
-            toast.error(error.response?.data?.error || 'Failed to add image');
+            console.error('Submit error:', error);
+            toast.error(error.response?.data?.error || 'Failed to save gallery item');
         }
     };
 
@@ -113,14 +140,19 @@ const AdminGallery = () => {
 
     const handleEdit = (item) => {
         setEditingItem(item);
+        setRemoveImage(false);
         setFormData({
-            title: item.title,
+            title: item.title || '',
             description: item.description || '',
-            category: item.category,
+            category: item.category || 'nails',
             display_order: item.display_order || ''
         });
         if (item.image_url) {
             setImagePreview(`http://localhost:5000${item.image_url}`);
+            setImageFile(null);
+        } else {
+            setImagePreview(null);
+            setImageFile(null);
         }
         setShowModal(true);
     };
@@ -136,6 +168,7 @@ const AdminGallery = () => {
         });
         setImagePreview(null);
         setImageFile(null);
+        setRemoveImage(false);
     };
 
     const columns = [
@@ -215,7 +248,7 @@ const AdminGallery = () => {
                 noDataMessage="No images in gallery. Click 'Add Image' to upload one."
             />
 
-            {/* Add/Edit Modal - Same style as AdminServices */}
+            {/* Add/Edit Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
                     <div className="bg-white dark:bg-dark rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
@@ -276,18 +309,22 @@ const AdminGallery = () => {
                             </div>
                             
                             <div className="mb-6">
-                                <label className="block font-medium mb-2">Image {!editingItem && '*'}</label>
+                                <label className="block font-medium mb-2">
+                                    Image {!editingItem && '*'}
+                                    {editingItem && ' (Leave empty to keep current)'}
+                                </label>
                                 <div className="border-2 border-dashed border-light-gray rounded-lg p-4 text-center">
                                     {imagePreview ? (
                                         <div className="relative">
                                             <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
                                             <button
                                                 type="button"
-                                                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                             >
                                                 <i className="fas fa-times text-xs"></i>
                                             </button>
+                                            <p className="text-xs text-gray">Click × to remove image</p>
                                         </div>
                                     ) : (
                                         <>
@@ -302,10 +339,9 @@ const AdminGallery = () => {
                                         onChange={handleImageChange}
                                         className="hidden"
                                         id="gallery-image"
-                                        required={!editingItem && !imagePreview}
                                     />
                                     {!imagePreview && (
-                                        <label htmlFor="gallery-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                        <label htmlFor="gallery-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                             Choose Image
                                         </label>
                                     )}

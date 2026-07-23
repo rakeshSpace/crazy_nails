@@ -10,6 +10,7 @@ const AdminTestimonials = () => {
     const [editingItem, setEditingItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
         role: '',
@@ -39,12 +40,19 @@ const AdminTestimonials = () => {
         const file = e.target.files[0];
         if (file) {
             setImageFile(file);
+            setRemoveImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
     };
 
     const handleSubmit = async (e) => {
@@ -58,8 +66,23 @@ const AdminTestimonials = () => {
         formDataToSend.append('display_order', formData.display_order || 0);
         formDataToSend.append('is_approved', formData.is_approved ? '1' : '0');
         
-        if (imageFile) {
-            formDataToSend.append('image', imageFile);
+        // Handle image for edit mode
+        if (editingItem) {
+            if (removeImage) {
+                // User wants to remove the image
+                formDataToSend.append('remove_image', 'true');
+                console.log('Testimonial image removal requested');
+            } else if (imageFile) {
+                // User uploaded a new image
+                formDataToSend.append('image', imageFile);
+                console.log('New testimonial image uploaded');
+            }
+            // If neither, keep existing image
+        } else {
+            // New testimonial - image is optional
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            }
         }
         
         try {
@@ -95,6 +118,7 @@ const AdminTestimonials = () => {
 
     const handleEdit = (item) => {
         setEditingItem(item);
+        setRemoveImage(false);
         setFormData({
             name: item.name,
             role: item.role || '',
@@ -105,6 +129,10 @@ const AdminTestimonials = () => {
         });
         if (item.image_url) {
             setImagePreview(`http://localhost:5000${item.image_url}`);
+            setImageFile(null);
+        } else {
+            setImagePreview(null);
+            setImageFile(null);
         }
         setShowModal(true);
     };
@@ -143,6 +171,7 @@ const AdminTestimonials = () => {
         });
         setImagePreview(null);
         setImageFile(null);
+        setRemoveImage(false);
     };
 
     const renderStars = (rating) => {
@@ -364,11 +393,12 @@ const AdminTestimonials = () => {
                                             <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-primary" />
                                             <button
                                                 type="button"
-                                                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                                                className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                             >
                                                 <i className="fas fa-times text-xs"></i>
                                             </button>
+                                            <p className="text-xs text-gray">Click × to remove image</p>
                                         </div>
                                     ) : (
                                         <>
@@ -384,7 +414,7 @@ const AdminTestimonials = () => {
                                         className="hidden"
                                         id="testimonial-image"
                                     />
-                                    <label htmlFor="testimonial-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                    <label htmlFor="testimonial-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                         {imagePreview ? 'Change Image' : 'Choose Image'}
                                     </label>
                                 </div>

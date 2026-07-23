@@ -1,4 +1,6 @@
 const db = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 
 // Get approved testimonials for frontend
 const getTestimonials = async (req, res) => {
@@ -66,17 +68,51 @@ const createTestimonial = async (req, res) => {
 const updateTestimonial = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, role, comment, rating, display_order, is_approved } = req.body;
+        const { name, role, comment, rating, display_order, is_approved, remove_image } = req.body;
         
+        console.log('Updating testimonial with remove_image:', remove_image);
+        
+        // Handle image logic
         let image_url = null;
-        if (req.file) {
+        let shouldUpdateImage = false;
+        
+        // Check if user wants to remove image
+        if (remove_image === 'true' || remove_image === true) {
+            // Get current image to delete it
+            const [current] = await db.execute('SELECT image_url FROM testimonials WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old testimonial image:', oldImagePath);
+                }
+            }
+            image_url = null;
+            shouldUpdateImage = true;
+            console.log('Testimonial image removal requested - will set image_url to NULL');
+        }
+        // Check if new image is uploaded
+        else if (req.file) {
             image_url = `/uploads/testimonials/${req.file.filename}`;
+            shouldUpdateImage = true;
+            
+            // Delete old image if exists
+            const [current] = await db.execute('SELECT image_url FROM testimonials WHERE id = ?', [id]);
+            if (current[0]?.image_url) {
+                const oldImagePath = path.join(__dirname, '../../', current[0].image_url);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                    console.log('Deleted old testimonial image:', oldImagePath);
+                }
+            }
+            console.log('New testimonial image uploaded:', image_url);
         }
         
         let query = 'UPDATE testimonials SET name = ?, role = ?, comment = ?, rating = ?, display_order = ?, is_approved = ?';
         const values = [name, role || null, comment, rating || 5, display_order || 0, is_approved !== undefined ? is_approved : 1];
         
-        if (image_url) {
+        // Add image_url to query if we need to update it
+        if (shouldUpdateImage) {
             query += ', image_url = ?';
             values.push(image_url);
         }
@@ -84,18 +120,31 @@ const updateTestimonial = async (req, res) => {
         query += ' WHERE id = ?';
         values.push(id);
         
+        console.log('Executing query:', query);
+        console.log('Values:', values);
+        
         await db.execute(query, values);
         
         res.json({ message: 'Testimonial updated successfully' });
     } catch (error) {
         console.error('Update testimonial error:', error);
-        res.status(500).json({ error: 'Failed to update testimonial' });
+        res.status(500).json({ error: 'Failed to update testimonial: ' + error.message });
     }
 };
 
 // Delete testimonial
 const deleteTestimonial = async (req, res) => {
     try {
+        // Get image to delete it
+        const [current] = await db.execute('SELECT image_url FROM testimonials WHERE id = ?', [req.params.id]);
+        if (current[0]?.image_url) {
+            const imagePath = path.join(__dirname, '../../', current[0].image_url);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+                console.log('Deleted testimonial image:', imagePath);
+            }
+        }
+        
         await db.execute('DELETE FROM testimonials WHERE id = ?', [req.params.id]);
         res.json({ message: 'Testimonial deleted successfully' });
     } catch (error) {
