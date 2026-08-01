@@ -14,6 +14,7 @@ const AdminOrderManagement = () => {
     const [actionData, setActionData] = useState({});
     const [returnRequests, setReturnRequests] = useState([]);
     const [showReturnModal, setShowReturnModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('orders');
 
     useEffect(() => {
         fetchOrders();
@@ -43,7 +44,7 @@ const AdminOrderManagement = () => {
 
     const updateOrderStatus = async (orderId, status, trackingData = {}) => {
         try {
-            await api.put(`/orders/admin/${orderId}/status`, { order_status: status, ...trackingData });
+            await api.put(`/orders/${orderId}/status`, { order_status: status, ...trackingData });
             toast.success(`Order status updated to ${status}`);
             fetchOrders();
             setShowActionModal(false);
@@ -108,11 +109,67 @@ const AdminOrderManagement = () => {
     };
 
     const generateInvoice = async (orderId) => {
+        const invoiceWindow = window.open('', '_blank');
+        if (!invoiceWindow) {
+            toast.error('Please allow pop-ups to download the invoice');
+            return;
+        }
+        invoiceWindow.document.write('<p style="font-family:sans-serif;padding:40px;">Preparing invoice...</p>');
         try {
             const response = await api.get(`/orders/admin/${orderId}/invoice`);
-            window.open(response.data.invoice_url, '_blank');
-            toast.success('Invoice generated');
+            const { order, items, company } = response.data;
+            const money = (v) => `Rs. ${Number(v || 0).toFixed(2)}`;
+            const subtotal = (order.total_amount || 0) - (order.delivery_charge || 0);
+            const rows = items.map((it, idx) => `
+                <tr><td>${idx + 1}</td><td>${it.product_name}</td><td style="text-align:center">${it.quantity}</td><td style="text-align:right">${money(it.price)}</td><td style="text-align:right">${money(it.price * it.quantity)}</td></tr>
+            `).join('');
+            const logoUrl = company?.logo
+                ? (company.logo.startsWith('http') ? company.logo : `${window.location.origin}${company.logo}`)
+                : null;
+            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><title>Invoice ${order.order_number}</title>
+                <style>
+                    body{font-family:Arial,Helvetica,sans-serif;padding:40px;max-width:800px;margin:0 auto;color:#2c2c2c}
+                    .header{text-align:center;margin-bottom:30px}
+                    .logo{font-size:24px;color:#d4a574;margin-bottom:10px}
+                    .order-info{margin-bottom:30px;padding:15px;background:#f5f5f5;border-radius:8px}
+                    .order-info td{padding:5px}
+                    table.items{width:100%;border-collapse:collapse;margin-bottom:30px}
+                    table.items th,table.items td{border:1px solid #ddd;padding:10px;text-align:left}
+                    table.items th{background:#f5f5f5}
+                    .total{text-align:right;font-size:18px;font-weight:bold;margin-top:20px}
+                    .footer{text-align:center;margin-top:50px;padding-top:20px;border-top:1px solid #ddd;color:#666}
+                    .print-btn{position:fixed;top:16px;right:16px;background:linear-gradient(135deg,#d4a574,#8b7355);color:#fff;border:none;padding:10px 20px;border-radius:50px;font-weight:600;cursor:pointer}
+                    @media print{.print-btn{display:none}}
+                </style></head>
+                <body>
+                <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+                <div class="header">
+                    ${logoUrl ? `<img src="${logoUrl}" alt="${company?.name || 'Logo'}" style="height:50px;object-fit:contain;margin-bottom:8px;" onerror="this.style.display='none'" />` : ''}
+                    <div class="logo">✨ ${company?.name || 'Crazy Nails & Lashes'} ✨</div>
+                    <div style="font-size:28px">TAX INVOICE</div>
+                </div>
+                <div class="order-info"><table>
+                    <tr><td><strong>Order Number:</strong></td><td>${order.order_number}</td></tr>
+                    <tr><td><strong>Order Date:</strong></td><td>${order.created_at ? new Date(order.created_at).toLocaleString('en-GB') : '-'}</td></tr>
+                    <tr><td><strong>Customer Name:</strong></td><td>${order.customer_name || ''}</td></tr>
+                    <tr><td><strong>Customer Email:</strong></td><td>${order.customer_email || ''}</td></tr>
+                    <tr><td><strong>Customer Phone:</strong></td><td>${order.customer_phone || ''}</td></tr>
+                    <tr><td><strong>Shipping Address:</strong></td><td>${order.shipping_address || ''}</td></tr>
+                    <tr><td><strong>Payment Method:</strong></td><td>${order.payment_method === 'razorpay' ? 'Razorpay' : 'Cash on Delivery'}</td></tr>
+                </table></div>
+                <table class="items"><thead><tr><th>#</th><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table>
+                <div class="total">
+                    <p>Subtotal: ${money(subtotal)}</p>
+                    <p>Delivery Charge: ${order.delivery_charge ? money(order.delivery_charge) : 'Free'}</p>
+                    <p>Grand Total: ${money(order.total_amount)}</p>
+                </div>
+                <div class="footer"><p>Thank you for shopping with ${company?.name || 'Crazy Nails & Lashes'}!</p><p>For any queries, contact us at: ${order.customer_email || ''}</p></div>
+                </body></html>`;
+            invoiceWindow.document.open();
+            invoiceWindow.document.write(html);
+            invoiceWindow.document.close();
         } catch (error) {
+            invoiceWindow.close();
             toast.error('Failed to generate invoice');
         }
     };
@@ -252,28 +309,40 @@ const AdminOrderManagement = () => {
         <div>
             <div className="flex gap-2 mb-6 border-b">
                 <button
-                    onClick={() => fetchOrders()}
-                    className="px-4 py-2 text-primary border-b-2 border-primary"
+                    onClick={() => setActiveTab('orders')}
+                    className={`px-4 py-2 ${activeTab === 'orders' ? 'text-primary border-b-2 border-primary font-medium' : 'text-gray'}`}
                 >
                     All Orders ({orders.length})
                 </button>
                 <button
-                    onClick={() => fetchReturnRequests()}
-                    className="px-4 py-2 text-gray"
+                    onClick={() => setActiveTab('returns')}
+                    className={`px-4 py-2 ${activeTab === 'returns' ? 'text-primary border-b-2 border-primary font-medium' : 'text-gray'}`}
                 >
                     Return Requests ({returnRequests.length})
                 </button>
             </div>
 
-            <DataTable
-                columns={columns}
-                data={orders}
-                title="Order Management"
-                progressPending={loading}
-                searchable={true}
-                pagination={true}
-                exportable={true}
-            />
+            {activeTab === 'orders' ? (
+                <DataTable
+                    columns={columns}
+                    data={orders}
+                    title="Order Management"
+                    progressPending={loading}
+                    searchable={true}
+                    pagination={true}
+                    exportable={true}
+                />
+            ) : (
+                <DataTable
+                    columns={returnColumns}
+                    data={returnRequests}
+                    title="Return Requests"
+                    searchable={true}
+                    pagination={true}
+                    exportable={true}
+                    noDataMessage="No return requests"
+                />
+            )}
 
             {/* Tracking Modal */}
             {showActionModal && selectedOrder && actionType === 'tracking' && (

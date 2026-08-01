@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const Header = () => {
@@ -9,10 +10,10 @@ const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const { user, isAuthenticated, logout } = useAuth();
     const { getItemCount } = useCart();
+    const { wishlistItems } = useWishlist();
     const { darkMode, toggleDarkMode } = useTheme();
     const location = useLocation();
 
-    // Check if current page is admin
     const isAdminPage = location.pathname.startsWith('/admin');
 
     useEffect(() => {
@@ -29,9 +30,7 @@ const Header = () => {
         { to: '/products', label: 'Products' },
         { to: '/gallery', label: 'Gallery' },
         { to: '/about', label: 'Why Choose Us' },
-        // { to: '/franchise', label: 'Franchise' },
         { to: '/courses', label: 'Training' }
-        
     ];
 
     return (
@@ -63,14 +62,16 @@ const Header = () => {
                         </div>
                     </Link>
 
-                    {/* Desktop Navigation - Hide on admin pages */}
+                    {/* Desktop Navigation */}
                     {!isAdminPage && (
                         <ul className="hidden lg:flex items-center gap-1">
                             {navLinks.map(link => (
                                 <li key={link.to}>
                                     <Link
                                         to={link.to}
-                                        className={`px-3 py-1.5 font-medium relative ${location.pathname === link.to ? 'text-primary' : 'text-dark dark:text-white'} hover:text-primary transition-colors`}
+                                        className={`px-3 py-1.5 font-medium relative ${
+                                            location.pathname === link.to ? 'text-primary' : 'text-dark dark:text-white'
+                                        } hover:text-primary transition-colors`}
                                     >
                                         {link.label}
                                         {location.pathname === link.to && (
@@ -82,6 +83,18 @@ const Header = () => {
                             <li>
                                 <Link to="/booking" className="btn-book ml-2">Book Now</Link>
                             </li>
+                            {/* Wishlist Icon */}
+                            <li className="relative ml-2">
+                                <Link to="/wishlist" className="w-9 h-9 bg-light dark:bg-dark-light rounded-full flex items-center justify-center hover:bg-accent dark:hover:bg-primary/20 transition-all">
+                                    <i className="fas fa-heart text-primary"></i>
+                                    {wishlistItems.length > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-primary to-secondary text-white rounded-full text-xs flex items-center justify-center">
+                                            {wishlistItems.length}
+                                        </span>
+                                    )}
+                                </Link>
+                            </li>
+                            {/* Cart Icon */}
                             <li className="relative ml-2">
                                 <Link to="/cart" className="w-9 h-9 bg-light dark:bg-dark-light rounded-full flex items-center justify-center hover:bg-accent dark:hover:bg-primary/20 transition-all">
                                     <i className="fas fa-shopping-cart text-primary"></i>
@@ -97,7 +110,6 @@ const Header = () => {
 
                     {/* Right side buttons */}
                     <div className="flex items-center gap-3">
-                        {/* Dark mode toggle */}
                         <button
                             onClick={toggleDarkMode}
                             className="w-9 h-9 rounded-full bg-light dark:bg-dark-light flex items-center justify-center hover:bg-accent dark:hover:bg-primary/20 transition-all"
@@ -106,7 +118,6 @@ const Header = () => {
                             <i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'} text-primary`}></i>
                         </button>
 
-                        {/* Auth buttons - Show on non-admin pages or if admin is not in admin panel */}
                         {!isAdminPage && (
                             <>
                                 {isAuthenticated ? (
@@ -155,14 +166,13 @@ const Header = () => {
                             </>
                         )}
 
-                        {/* Admin back to site button */}
                         {isAdminPage && (
                             <Link to="/" className="hidden lg:block px-4 py-1.5 text-primary font-medium hover:bg-light dark:hover:bg-dark-light rounded-full transition-colors">
                                 <i className="fas fa-arrow-left mr-2"></i> Back to Site
                             </Link>
                         )}
 
-                        {/* Mobile menu button - Hide on admin pages */}
+                        {/* Mobile menu button */}
                         {!isAdminPage && (
                             <button
                                 className="lg:hidden w-9 h-9 rounded-full bg-light dark:bg-dark-light flex items-center justify-center"
@@ -175,7 +185,7 @@ const Header = () => {
                     </div>
                 </nav>
 
-                {/* Mobile Navigation - Only on non-admin pages */}
+                {/* Mobile Navigation */}
                 {!isAdminPage && (
                     <div className={`lg:hidden fixed top-[73px] left-0 w-full bg-white dark:bg-dark shadow-medium transition-all duration-300 ${isMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
                         <ul className="flex flex-col p-4 max-h-[calc(100vh-73px)] overflow-y-auto">
@@ -193,6 +203,17 @@ const Header = () => {
                             <li>
                                 <Link to="/booking" className="btn-book block text-center mt-2" onClick={() => setIsMenuOpen(false)}>
                                     <i className="fas fa-calendar-check mr-2"></i> Book Now
+                                </Link>
+                            </li>
+                            {/* Mobile: Wishlist & Cart shortcuts */}
+                            <li className="mt-4 pt-4 border-t border-light-gray dark:border-gray-700 flex items-center justify-around">
+                                <Link to="/wishlist" className="flex items-center gap-2 text-dark dark:text-white" onClick={() => setIsMenuOpen(false)}>
+                                    <i className="fas fa-heart text-red-500"></i>
+                                    Wishlist ({wishlistItems.length})
+                                </Link>
+                                <Link to="/cart" className="flex items-center gap-2 text-dark dark:text-white" onClick={() => setIsMenuOpen(false)}>
+                                    <i className="fas fa-shopping-cart text-primary"></i>
+                                    Cart ({getItemCount()})
                                 </Link>
                             </li>
                             
@@ -236,6 +257,11 @@ const Header = () => {
                                     <li>
                                         <Link to="/my-orders" className="block py-3 text-dark dark:text-white" onClick={() => setIsMenuOpen(false)}>
                                             <i className="fas fa-shopping-bag mr-2 w-5"></i> My Orders
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/wishlist" className="block py-3 text-dark dark:text-white" onClick={() => setIsMenuOpen(false)}>
+                                            <i className="fas fa-heart mr-2 w-5"></i> My Wishlist
                                         </Link>
                                     </li>
                                     {user?.role === 'admin' && (

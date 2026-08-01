@@ -33,8 +33,8 @@ const initiateRefund = async (orderId, amount, paymentMethod) => {
     try {
         console.log(`Initiating refund of ₹${amount} for order ${orderId}`);
         await db.execute(
-            `UPDATE orders SET refund_status = 'processed', refund_processed_at = NOW() WHERE id = ?`,
-            [orderId]
+            `UPDATE orders SET refund_status = 'processed', refund_amount = ? WHERE id = ?`,
+            [amount, orderId]
         );
         return true;
     } catch (error) {
@@ -317,6 +317,29 @@ const getAllOrders = async (req, res) => {
     }
 };
 
+// ============ GET RETURN REQUESTS (Admin) ============
+const getReturnRequests = async (req, res) => {
+    try {
+        const [orders] = await db.execute(
+            `SELECT * FROM orders WHERE return_requested = 1 ORDER BY 
+                CASE WHEN return_status = 'pending' THEN 0 ELSE 1 END, created_at DESC`
+        );
+
+        for (let order of orders) {
+            const [items] = await db.execute(
+                `SELECT * FROM order_items WHERE order_id = ?`,
+                [order.id]
+            );
+            order.items = items;
+        }
+
+        res.json(orders);
+    } catch (error) {
+        console.error('Get return requests error:', error);
+        res.status(500).json({ error: 'Failed to fetch return requests' });
+    }
+};
+
 // Update delivery settings (Admin)
 const updateDeliverySettings = async (req, res) => {
     try {
@@ -381,6 +404,10 @@ const requestReturn = async (req, res) => {
         const { order_id, reason, item_id } = req.body;
         const user_id = req.user.id;
 
+        if (!order_id || !reason) {
+            return res.status(400).json({ error: 'Order ID and reason are required' });
+        }
+
         const [orders] = await db.execute(
             'SELECT * FROM orders WHERE id = ? AND user_id = ? AND order_status = "delivered"',
             [order_id, user_id]
@@ -394,14 +421,26 @@ const requestReturn = async (req, res) => {
             return res.status(400).json({ error: 'Return already requested for this order' });
         }
 
+        // Resolve the item name (if provided) so it's preserved in the reason text
+        // rather than relying on a dedicated column that doesn't exist in the schema.
+        let finalReason = reason;
+        if (item_id) {
+            const [itemRows] = await db.execute(
+                'SELECT product_name FROM order_items WHERE id = ? AND order_id = ?',
+                [item_id, order_id]
+            );
+            if (itemRows.length > 0) {
+                finalReason = `[Item: ${itemRows[0].product_name}] ${reason}`;
+            }
+        }
+
         await db.execute(
             `UPDATE orders SET 
                 return_requested = 1,
                 return_reason = ?,
-                return_status = 'pending',
-                item_id_for_return = ?
+                return_status = 'pending'
              WHERE id = ?`,
-            [reason, item_id || null, order_id]
+            [finalReason, order_id]
         );
 
         await notifyAdmin('New return request', `Order #${orders[0].order_number} has requested return`);
@@ -507,27 +546,29 @@ const processReturn = async (req, res) => {
         }
 
         if (action === 'approve') {
+            const noteSuffix = admin_notes ? ` | Admin note: ${admin_notes}` : '';
             await db.execute(
                 `UPDATE orders SET 
                     return_status = 'approved',
                     return_approved_at = NOW(),
                     refund_amount = ?,
                     refund_status = 'pending',
-                    admin_notes = ?
+                    return_reason = CONCAT(COALESCE(return_reason, ''), ?)
                  WHERE id = ?`,
-                [refund_amount || orders[0].total_amount, admin_notes, id]
+                [refund_amount || orders[0].total_amount, noteSuffix, id]
             );
 
             await initiateRefund(id, refund_amount || orders[0].total_amount, orders[0].payment_method);
 
             res.json({ message: 'Return approved, refund initiated' });
         } else if (action === 'reject') {
+            const noteSuffix = admin_notes ? ` | Rejected: ${admin_notes}` : ' | Rejected';
             await db.execute(
                 `UPDATE orders SET 
                     return_status = 'rejected',
-                    admin_notes = ?
+                    return_reason = CONCAT(COALESCE(return_reason, ''), ?)
                  WHERE id = ?`,
-                [admin_notes, id]
+                [noteSuffix, id]
             );
             res.json({ message: 'Return request rejected' });
         } else {
@@ -557,6 +598,12 @@ const generateInvoice = async (req, res) => {
         }
 
         const order = orders[0];
+
+        // Allow admins to fetch any invoice, but customers only their own
+        if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+            return res.status(403).json({ error: 'Not authorized to view this invoice' });
+        }
+
         const [items] = await db.execute('SELECT * FROM order_items WHERE order_id = ?', [id]);
 
         // Return JSON data for frontend to generate HTML/PDF
@@ -575,7 +622,7 @@ const generateInvoice = async (req, res) => {
             },
             items: items,
             company: {
-                name: 'Crazy Nails & Lashes',
+                name: 'Crazy Nails',
                 logo: '/logo.png',
                 website: 'https://crazynails.com'
             }
@@ -604,8 +651,8 @@ const updateTracking = async (req, res) => {
 
         await db.execute(
             `INSERT INTO delivery_updates (order_id, status, remarks, created_at)
-             VALUES (?, 'shipped', 'Order has been shipped with ${courier_name}', NOW())`,
-            [id]
+             VALUES (?, 'shipped', ?, NOW())`,
+            [id, `Order has been shipped with ${courier_name || 'our courier partner'}`]
         );
 
         res.json({ message: 'Tracking updated successfully' });
@@ -660,5 +707,6 @@ module.exports = {
     processReturn,
     generateInvoice,
     updateTracking,
-    addDeliveryUpdate
+    addDeliveryUpdate,
+    getReturnRequests
 };

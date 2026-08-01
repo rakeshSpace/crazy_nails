@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CartProvider } from './contexts/CartContext';
+import { WishlistProvider } from './contexts/WishlistContext';
 
 // Layout Components
 import Header from './components/Layout/Header';
@@ -24,11 +25,12 @@ import Booking from './pages/Booking';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Cart from './pages/Cart';
+import Wishlist from './pages/Wishlist';
 import Courses from './pages/Courses';
 import CourseDetails from './pages/CourseDetails';
 import AdminCourses from './pages/admin/AdminCourses';
 import VerifyCertificate from './pages/VerifyCertificate';
-import Franchise from './pages/Franchise';  
+import Franchise from './pages/Franchise';
 
 // Protected Pages (Requires Login)
 import Profile from './pages/Profile';
@@ -39,11 +41,13 @@ import MyCertificates from './pages/MyCertificates';
 import CoursePlayer from './pages/CoursePlayer';
 import MyOrders from './pages/MyOrders';
 import OrderTracking from './pages/OrderTracking';
+import Terms from './pages/Terms';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminFranchise from './pages/admin/AdminFranchise'; 
+import AdminFranchise from './pages/admin/AdminFranchise';
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute';
@@ -73,92 +77,98 @@ function App() {
             <ThemeProvider>
                 <AuthProvider>
                     <CartProvider>
-                        <Router>
-                            <Layout>
-                                <Routes>
-                                    {/* ========== PUBLIC ROUTES ========== */}
-                                    {/* Main Pages */}
-                                    <Route path="/" element={<Home />} />
-                                    <Route path="/services" element={<Services />} />
-                                    <Route path="/products" element={<Products />} />
-                                    <Route path="/products/:id" element={<ProductDetails />} />
-                                    <Route path="/gallery" element={<Gallery />} />
-                                    <Route path="/about" element={<About />} />
-                                    <Route path="/booking" element={<Booking />} />
+                        <WishlistProvider>
+                            <Router>
+                                <Layout>
+                                    <Routes>
+                                        {/* ========== PUBLIC ROUTES ========== */}
+                                        {/* Main Pages */}
+                                        <Route path="/" element={<Home />} />
+                                        <Route path="/services" element={<Services />} />
+                                        <Route path="/products" element={<Products />} />
+                                        <Route path="/products/:id" element={<ProductDetails />} />
+                                        <Route path="/gallery" element={<Gallery />} />
+                                        <Route path="/about" element={<About />} />
+                                        <Route path="/booking" element={<Booking />} />
 
-                                    {/* Auth Pages */}
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/register" element={<Register />} />
+                                        {/* Auth Pages */}
+                                        <Route path="/login" element={<Login />} />
+                                        <Route path="/register" element={<Register />} />
 
-                                    {/* Shopping */}
-                                    <Route path="/cart" element={<Cart />} />
+                                        {/* Shopping */}
+                                        <Route path="/cart" element={<Cart />} />
+                                        <Route path="/wishlist" element={<Wishlist />} />
 
-                                    {/* Training & Courses */}
-                                    <Route path="/courses" element={<Courses />} />
-                                    <Route path="/courses/:slug" element={<CourseDetails />} />
-                                    {/* <Route path="/admin/courses" element={<AdminCourses />} /> */}
+                                        {/* Training & Courses */}
+                                        <Route path="/courses" element={<Courses />} />
+                                        <Route path="/courses/:slug" element={<CourseDetails />} />
+                                        {/* <Route path="/admin/courses" element={<AdminCourses />} /> */}
 
-                                    {/* Certificate Verification (Public) */}
-                                    <Route path="/verify/:code" element={<VerifyCertificate />} />
+                                        {/* Certificate Verification (Public) */}
+                                        <Route path="/verify/:code" element={<VerifyCertificate />} />
 
-                                    {/* Franchise Page (Public) */}
-                                    <Route path="/franchise" element={<Franchise />} />  {/* <--- ADD THIS */}
+                                        {/* Franchise Page (Public) */}
+                                        <Route path="/franchise" element={<Franchise />} />
 
-                                    {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
-                                    {/* User Profile & Account */}
-                                    <Route element={<ProtectedRoute />}>
-                                        <Route path="/profile" element={<Profile />} />
-                                        <Route path="/my-bookings" element={<MyBookings />} />
-                                        <Route path="/my-orders" element={<MyOrders />} />
-                                        <Route path="/order-tracking/:id" element={<OrderTracking />} />
-                                    </Route>
+                                        <Route path="/terms" element={<Terms />} />
+                                        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-                                    {/* Shopping & Checkout */}
-                                    <Route element={<ProtectedRoute />}>
-                                        <Route path="/checkout" element={<Checkout />} />
-                                    </Route>
+                                        {/* ========== PROTECTED ROUTES (Requires Authentication) ========== */}
+                                        {/* User Profile & Account */}
+                                        <Route element={<ProtectedRoute />}>
+                                            <Route path="/profile" element={<Profile />} />
+                                            <Route path="/my-bookings" element={<MyBookings />} />
+                                            <Route path="/my-orders" element={<MyOrders />} />
+                                            <Route path="/order-tracking/:id" element={<OrderTracking />} />
+                                        </Route>
 
-                                    {/* Learning Management System */}
-                                    <Route element={<ProtectedRoute />}>
-                                        <Route path="/my-learning" element={<MyLearning />} />
-                                        <Route path="/my-certificates" element={<MyCertificates />} />
-                                        <Route path="/course/learn/:courseId" element={<CoursePlayer />} />
-                                    </Route>
+                                        {/* Shopping & Checkout */}
+                                        <Route element={<ProtectedRoute />}>
+                                            <Route path="/checkout" element={<Checkout />} />
+                                        </Route>
 
-                                    {/* ========== ADMIN ROUTES (Requires Admin Role) ========== */}
-                                    <Route element={<ProtectedRoute adminOnly />}>
-                                        <Route path="/admin/*" element={<AdminDashboard />} />
-                                    </Route>
+                                        {/* Learning Management System */}
+                                        <Route element={<ProtectedRoute />}>
+                                            <Route path="/my-learning" element={<MyLearning />} />
+                                            <Route path="/my-certificates" element={<MyCertificates />} />
+                                            <Route path="/course/learn/:courseId" element={<CoursePlayer />} />
+                                        </Route>
 
-                                    {/* ========== 404 NOT FOUND ROUTE ========== */}
-                                    <Route path="*" element={<NotFound />} />
-                                </Routes>
-                            </Layout>
-                            <Toaster
-                                position="top-right"
-                                toastOptions={{
-                                    duration: 4000,
-                                    style: {
-                                        background: '#363636',
-                                        color: '#fff',
-                                    },
-                                    success: {
-                                        duration: 3000,
-                                        iconTheme: {
-                                            primary: '#27ae60',
-                                            secondary: '#fff',
-                                        },
-                                    },
-                                    error: {
+                                        {/* ========== ADMIN ROUTES (Requires Admin Role) ========== */}
+                                        <Route element={<ProtectedRoute adminOnly />}>
+                                            <Route path="/admin/*" element={<AdminDashboard />} />
+                                        </Route>
+
+                                        {/* ========== 404 NOT FOUND ROUTE ========== */}
+                                        <Route path="*" element={<NotFound />} />
+                                    </Routes>
+                                </Layout>
+                                <Toaster
+                                    position="top-right"
+                                    toastOptions={{
                                         duration: 4000,
-                                        iconTheme: {
-                                            primary: '#e74c3c',
-                                            secondary: '#fff',
+                                        style: {
+                                            background: '#363636',
+                                            color: '#fff',
                                         },
-                                    },
-                                }}
-                            />
-                        </Router>
+                                        success: {
+                                            duration: 3000,
+                                            iconTheme: {
+                                                primary: '#27ae60',
+                                                secondary: '#fff',
+                                            },
+                                        },
+                                        error: {
+                                            duration: 4000,
+                                            iconTheme: {
+                                                primary: '#e74c3c',
+                                                secondary: '#fff',
+                                            },
+                                        },
+                                    }}
+                                />
+                            </Router>
+                        </WishlistProvider>
                     </CartProvider>
                 </AuthProvider>
             </ThemeProvider>

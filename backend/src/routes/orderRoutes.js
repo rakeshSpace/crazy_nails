@@ -15,7 +15,8 @@ const {
     processReturn,
     generateInvoice,
     updateTracking,
-    addDeliveryUpdate
+    addDeliveryUpdate,
+    getReturnRequests
 } = require('../controllers/orderController');
 const { authenticate, authorize } = require('../middleware/auth');
 const router = express.Router();
@@ -32,6 +33,7 @@ router.get('/my-orders', getUserOrders);
 router.get('/delivery-settings', getDeliverySettingsAPI);
 router.get('/:id', getOrderById);
 router.get('/:id/tracking', getDeliveryUpdates);
+router.get('/:id/invoice', generateInvoice);
 
 // User actions
 router.post('/request-return', requestReturn);
@@ -41,6 +43,7 @@ router.put('/:id/cancel', cancelOrder);
 // Order management
 router.put('/:id/status', authorize('admin'), updateOrderStatus);
 router.get('/admin/all', authorize('admin'), getAllOrders);
+router.get('/admin/return-requests', authorize('admin'), getReturnRequests);
 router.put('/admin/delivery-settings', authorize('admin'), updateDeliverySettings);
 
 // Admin order actions

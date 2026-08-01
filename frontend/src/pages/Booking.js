@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Helmet } from 'react-helmet-async';
@@ -13,7 +13,7 @@ const Booking = () => {
     const [services, setServices] = useState([]);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [formData, setFormData] = useState({
-        user_id: null,  // Add this field
+        user_id: null,
         customer_name: '',
         customer_email: '',
         customer_phone: '',
@@ -30,7 +30,7 @@ const Booking = () => {
         if (isAuthenticated && user) {
             setFormData(prev => ({
                 ...prev,
-                user_id: user.id,  // Set user_id
+                user_id: user.id,
                 customer_name: user.name || '',
                 customer_email: user.email || '',
                 customer_phone: user.phone || ''
@@ -216,11 +216,11 @@ const Booking = () => {
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <i className="fas fa-envelope text-primary w-5"></i>
-                                        <span>bookings@crazynailsandlashes.com</span>
+                                        <span>bookings@crazynailss.com</span>
                                     </li>
                                     <li className="flex items-center gap-3">
                                         <i className="fas fa-map-marker-alt text-primary w-5"></i>
-                                        <span>Beauty Parlour Street, City Center</span>
+                                        <span>45, 2nd Cross Rd, opposite to Simon Burgers, near Venkateswara Garments, Ramaiah Layout, Kammanahalli, Bengaluru, Karnataka 560084</span>
                                     </li>
                                 </ul>
                             </div>
@@ -248,130 +248,171 @@ const Booking = () => {
                                 <p className="text-white/90">Fill out the form below to schedule your appointment</p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6">
-                                <div className="mb-4">
-                                    <label className="block font-medium mb-2">Full Name *</label>
-                                    <input
-                                        type="text"
-                                        name="customer_name"
-                                        value={formData.customer_name}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
-                                        placeholder="Enter your full name"
-                                    />
+                            {!isAuthenticated ? (
+                                /*  Login/Register Required Message */
+                                <div className="p-8 text-center">
+                                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <i className="fas fa-lock text-3xl text-primary"></i>
+                                    </div>
+                                    <h3 className="text-xl font-bold mb-3">Login Required to Book</h3>
+                                    <p className="text-gray mb-6">
+                                        Please login or create an account to book an appointment.
+                                        It only takes a minute and you'll be able to:
+                                    </p>
+                                    <ul className="text-left space-y-2 mb-6 max-w-xs mx-auto">
+                                        <li className="flex items-center gap-2 text-sm">
+                                            <i className="fas fa-check-circle text-primary"></i>
+                                            <span>View your booking history</span>
+                                        </li>
+                                        <li className="flex items-center gap-2 text-sm">
+                                            <i className="fas fa-check-circle text-primary"></i>
+                                            <span>Manage and cancel appointments</span>
+                                        </li>
+                                        <li className="flex items-center gap-2 text-sm">
+                                            <i className="fas fa-check-circle text-primary"></i>
+                                            <span>Get exclusive offers and updates</span>
+                                        </li>
+                                    </ul>
+                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                        <Link to="/login" state={{ from: location }} className="btn">
+                                            <i className="fas fa-sign-in-alt mr-2"></i> Login
+                                        </Link>
+                                        <Link to="/register" state={{ from: location }} className="btn">
+                                            <i className="fas fa-user-plus mr-2"></i> Create Account
+                                        </Link>
+                                    </div>
+                                    <p className="text-xs text-gray mt-4">
+                                        <i className="fas fa-shield-alt text-primary mr-1"></i>
+                                        Your data is secure and private
+                                    </p>
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block font-medium mb-2">Phone Number *</label>
+                            ) : (
+                                /* ✅ Booking Form - Only for Logged In Users */
+                                <form onSubmit={handleSubmit} className="p-6">
+                                    <div className="mb-4">
+                                        <label className="block font-medium mb-2">Full Name *</label>
                                         <input
-                                            type="tel"
-                                            name="customer_phone"
-                                            value={formData.customer_phone}
+                                            type="text"
+                                            name="customer_name"
+                                            value={formData.customer_name}
                                             onChange={handleChange}
                                             required
                                             className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
-                                            placeholder="Enter your phone number"
+                                            placeholder="Enter your full name"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block font-medium mb-2">Email Address *</label>
-                                        <input
-                                            type="email"
-                                            name="customer_email"
-                                            value={formData.customer_email}
-                                            onChange={handleChange}
-                                            required
-                                            className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
-                                            placeholder="Enter your email address"
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="mb-4">
-                                    <label className="block font-medium mb-2">Select Service *</label>
-                                    <select
-                                        name="service_id"
-                                        value={formData.service_id}
-                                        onChange={handleChange}
-                                        required
-                                        className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light appearance-none"
-                                        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b7355' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 15px center" }}
-                                    >
-                                        <option value="">Choose a service</option>
-                                        {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
-                                            <optgroup key={category} label={category}>
-                                                {categoryServices.map(service => (
-                                                    <option key={service.id} value={service.id}>
-                                                        {service.name} (₹{service.price})
-                                                    </option>
-                                                ))}
-                                            </optgroup>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label className="block font-medium mb-2">Preferred Date *</label>
-                                        <input
-                                            type="date"
-                                            id="booking-date"
-                                            name="booking_date"
-                                            value={formData.booking_date}
-                                            onChange={handleChange}
-                                            required
-                                            className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
-                                        />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block font-medium mb-2">Phone Number *</label>
+                                            <input
+                                                type="tel"
+                                                name="customer_phone"
+                                                value={formData.customer_phone}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
+                                                placeholder="Enter your phone number"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-medium mb-2">Email Address *</label>
+                                            <input
+                                                type="email"
+                                                name="customer_email"
+                                                value={formData.customer_email}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
+                                                placeholder="Enter your email address"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block font-medium mb-2">Preferred Time *</label>
+
+                                    <div className="mb-4">
+                                        <label className="block font-medium mb-2">Select Service *</label>
                                         <select
-                                            name="booking_time"
-                                            value={formData.booking_time}
+                                            name="service_id"
+                                            value={formData.service_id}
                                             onChange={handleChange}
                                             required
-                                            className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
+                                            className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light appearance-none"
+                                            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b7355' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 15px center" }}
                                         >
-                                            <option value="">Select time</option>
-                                            {availableSlots.map(slot => (
-                                                <option key={slot} value={slot}>{slot}</option>
+                                            <option value="">Choose a service</option>
+                                            {Object.entries(servicesByCategory).map(([category, categoryServices]) => (
+                                                <optgroup key={category} label={category}>
+                                                    {categoryServices.map(service => (
+                                                        <option key={service.id} value={service.id}>
+                                                            {service.name} (₹{service.price})
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
                                             ))}
                                         </select>
-                                        {availableSlots.length === 0 && formData.booking_date && formData.service_id && (
-                                            <p className="text-xs text-yellow-500 mt-1">No available slots for this date. Please select another date.</p>
-                                        )}
                                     </div>
-                                </div>
 
-                                <div className="mb-6">
-                                    <label className="block font-medium mb-2">Additional Notes (Optional)</label>
-                                    <textarea
-                                        name="notes"
-                                        value={formData.notes}
-                                        onChange={handleChange}
-                                        rows="4"
-                                        className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light resize-vertical"
-                                        placeholder="Any special requests, allergies, or additional information"
-                                    ></textarea>
-                                </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label className="block font-medium mb-2">Preferred Date *</label>
+                                            <input
+                                                type="date"
+                                                id="booking-date"
+                                                name="booking_date"
+                                                value={formData.booking_date}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block font-medium mb-2">Preferred Time *</label>
+                                            <select
+                                                name="booking_time"
+                                                value={formData.booking_time}
+                                                onChange={handleChange}
+                                                required
+                                                className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light"
+                                            >
+                                                <option value="">Select time</option>
+                                                {availableSlots.map(slot => (
+                                                    <option key={slot} value={slot}>{slot}</option>
+                                                ))}
+                                            </select>
+                                            {availableSlots.length === 0 && formData.booking_date && formData.service_id && (
+                                                <p className="text-xs text-yellow-500 mt-1">No available slots for this date. Please select another date.</p>
+                                            )}
+                                        </div>
+                                    </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading || availableSlots.length === 0}
-                                    className="w-full btn py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    {loading ? (
-                                        <><i className="fas fa-spinner fa-spin mr-2"></i> Booking...</>
-                                    ) : (
-                                        'Book Appointment Now'
-                                    )}
-                                </button>
-                                <p className="text-center text-gray text-xs mt-4">
-                                    By booking, you agree to our <a href="#" className="text-primary">terms and conditions</a>
-                                </p>
-                            </form>
+                                    <div className="mb-6">
+                                        <label className="block font-medium mb-2">Additional Notes (Optional)</label>
+                                        <textarea
+                                            name="notes"
+                                            value={formData.notes}
+                                            onChange={handleChange}
+                                            rows="4"
+                                            className="w-full px-4 py-3 border border-light-gray dark:border-gray-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-dark-light resize-vertical"
+                                            placeholder="Any special requests, allergies, or additional information"
+                                        ></textarea>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading || availableSlots.length === 0}
+                                        className="w-full btn py-3 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? (
+                                            <><i className="fas fa-spinner fa-spin mr-2"></i> Booking...</>
+                                        ) : (
+                                            'Book Appointment Now'
+                                        )}
+                                    </button>
+                                    <p className="text-center text-gray text-xs mt-4">
+                                        By booking, you agree to our <Link to="/terms" className="text-primary hover:underline">terms and conditions</Link>
+                                    </p>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -66,6 +66,46 @@ const AdminOrders = () => {
         }
     };
 
+    // Admin-initiated cancellation (uses the proper admin cancel endpoint so
+    // cancellation_reason, cancelled_by and refund_status are recorded correctly)
+    const cancelOrderAsAdmin = async (order) => {
+        const reason = window.prompt(`Cancel order #${order.order_number} — enter a reason:`);
+        if (reason === null) return; // user pressed Cancel on the prompt
+        if (!reason.trim()) {
+            toast.error('Please provide a cancellation reason');
+            return;
+        }
+        try {
+            await api.put(`/orders/admin/${order.id}/cancel`, {
+                cancellation_reason: reason.trim(),
+                refund_amount: order.total_amount
+            });
+            toast.success('Order cancelled successfully');
+            fetchOrders();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to cancel order');
+        }
+    };
+
+    // Approve or reject a customer's return request
+    const processReturnRequest = async (order, action) => {
+        if (action === 'approve' && !window.confirm(
+            `Approve return for order #${order.order_number}? A refund of ₹${order.total_amount} will be initiated.`
+        )) return;
+        if (action === 'reject' && !window.confirm(`Reject the return request for order #${order.order_number}?`)) return;
+
+        try {
+            await api.put(`/orders/admin/${order.id}/process-return`, {
+                action,
+                refund_amount: order.total_amount
+            });
+            toast.success(action === 'approve' ? 'Return approved, refund initiated' : 'Return request rejected');
+            fetchOrders();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to process return');
+        }
+    };
+
     const updateTracking = async (orderId) => {
         if (!trackingData.tracking_number) {
             toast.error('Please enter tracking number');
@@ -124,7 +164,8 @@ const AdminOrders = () => {
             </head>
             <body>
                 <div class="header">
-                    <div class="logo">✨ Crazy Nails & Lashes ✨</div>
+                    <img src="${window.location.origin}/logo.png" alt="Crazy Nails & Lashes" style="height:50px;object-fit:contain;margin-bottom:8px;" onerror="this.style.display='none'; document.getElementById('fallback-logo-text').style.display='block';" />
+                    <div class="logo" id="fallback-logo-text" style="display:none;">✨ Crazy Nails & Lashes ✨</div>
                     <div class="title">TAX INVOICE</div>
                 </div>
                 
@@ -171,16 +212,18 @@ const AdminOrders = () => {
     // Status filter component
     const StatusFilter = () => (
         <div className="flex flex-wrap gap-2">
-            {['all', 'pending', 'processing', 'confirmed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'].map(status => (
+            {['all', 'pending', 'processing', 'confirmed', 'shipped', 'out_for_delivery', 'delivered', 'cancelled', 'returns_pending'].map(status => (
                 <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
                     className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${filterStatus === status
                         ? 'bg-primary text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-light dark:text-gray-300'
+                        : status === 'returns_pending'
+                            ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-dark-light dark:text-gray-300'
                         }`}
                 >
-                    {status === 'all' ? 'All' : status.replace('_', ' ').toUpperCase()}
+                    {status === 'all' ? 'All' : status === 'returns_pending' ? 'Return Requests' : status.replace('_', ' ').toUpperCase()}
                 </button>
             ))}
         </div>
@@ -189,7 +232,9 @@ const AdminOrders = () => {
     // Filter data based on status
     const filteredOrders = filterStatus === 'all'
         ? orders
-        : orders.filter(order => order.order_status === filterStatus);
+        : filterStatus === 'returns_pending'
+            ? orders.filter(order => order.return_requested === 1 && order.return_status === 'pending')
+            : orders.filter(order => order.order_status === filterStatus);
 
     // Table columns
     const columns = [
@@ -266,21 +311,50 @@ const AdminOrders = () => {
             name: 'Status',
             selector: row => row.order_status,
             sortable: true,
-            width: '140px',
+            width: '150px',
             cell: row => (
-                <select
-                    value={row.order_status}
-                    onChange={(e) => updateOrderStatus(row.id, e.target.value)}
-                    className={`px-2 py-1 rounded-full text-xs font-semibold border-0 ${getStatusColor(row.order_status)} cursor-pointer`}
-                >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="out_for_delivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+                row.order_status === 'cancelled' ? (
+                    <div title={row.cancellation_reason || 'No reason provided'}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor('cancelled')}`}>
+                            Cancelled
+                        </span>
+                        <p className="text-[10px] text-gray-500 mt-1 truncate max-w-[130px]">
+                            {row.cancelled_by === 'admin' ? 'By admin' : 'By customer'}
+                            {row.cancellation_reason ? ` · ${row.cancellation_reason}` : ''}
+                        </p>
+                    </div>
+                ) : (
+                    <select
+                        value={row.order_status}
+                        onChange={(e) => updateOrderStatus(row.id, e.target.value)}
+                        className={`px-2 py-1 rounded-full text-xs font-semibold border-0 ${getStatusColor(row.order_status)} cursor-pointer`}
+                    >
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="out_for_delivery">Out for Delivery</option>
+                        <option value="delivered">Delivered</option>
+                    </select>
+                )
+            ),
+        },
+        {
+            name: 'Return',
+            width: '130px',
+            cell: row => (
+                row.return_requested === 1 ? (
+                    <span
+                        title={row.return_reason || ''}
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            row.return_status === 'approved' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                            row.return_status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                            'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                        }`}
+                    >
+                        {row.return_status?.toUpperCase() || 'REQUESTED'}
+                    </span>
+                ) : '-'
             ),
         },
         {
@@ -312,9 +386,9 @@ const AdminOrders = () => {
         },
         {
             name: 'Actions',
-            width: '120px',
+            width: '180px',
             cell: row => (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap items-center">
                     <button
                         onClick={() => {
                             setSelectedOrder(row);
@@ -344,6 +418,33 @@ const AdminOrders = () => {
                             <i className="fas fa-truck"></i>
                         </button>
                     )}
+                    {row.return_requested === 1 && row.return_status === 'pending' && (
+                        <>
+                            <button
+                                onClick={() => processReturnRequest(row, 'approve')}
+                                className="text-green-600 hover:text-green-700"
+                                title="Approve Return & Refund"
+                            >
+                                <i className="fas fa-check-circle"></i>
+                            </button>
+                            <button
+                                onClick={() => processReturnRequest(row, 'reject')}
+                                className="text-red-500 hover:text-red-600"
+                                title="Reject Return"
+                            >
+                                <i className="fas fa-ban"></i>
+                            </button>
+                        </>
+                    )}
+                    {row.order_status !== 'delivered' && row.order_status !== 'cancelled' && (
+                        <button
+                            onClick={() => cancelOrderAsAdmin(row)}
+                            className="text-red-500 hover:text-red-600"
+                            title="Cancel Order"
+                        >
+                            <i className="fas fa-times-circle"></i>
+                        </button>
+                    )}
                 </div>
             ),
         },
@@ -356,6 +457,7 @@ const AdminOrders = () => {
         { title: 'Processing', value: orders.filter(o => o.order_status === 'processing').length, icon: 'fa-cogs', color: 'bg-purple-500' },
         { title: 'Shipped', value: orders.filter(o => o.order_status === 'shipped').length, icon: 'fa-truck', color: 'bg-indigo-500' },
         { title: 'Delivered', value: orders.filter(o => o.order_status === 'delivered').length, icon: 'fa-check-circle', color: 'bg-green-500' },
+        { title: 'Pending Returns', value: orders.filter(o => o.return_requested === 1 && o.return_status === 'pending').length, icon: 'fa-undo-alt', color: 'bg-orange-500' },
         { title: 'Total Revenue', value: `₹${orders.reduce((sum, o) => sum + (o.payment_status === 'success' ? o.total_amount : 0), 0).toLocaleString()}`, icon: 'fa-rupee-sign', color: 'bg-primary' },
     ];
 
@@ -504,6 +606,44 @@ const AdminOrders = () => {
                                     </span>
                                 </div>
                             </div>
+
+                            {/* Cancellation / Return Info */}
+                            {selectedOrder.order_status === 'cancelled' && (
+                                <div className="mb-6 bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+                                    <h4 className="font-semibold mb-2 text-red-700 dark:text-red-400">
+                                        <i className="fas fa-times-circle mr-2"></i>Order Cancelled
+                                    </h4>
+                                    <p className="text-sm"><strong>Cancelled by:</strong> {selectedOrder.cancelled_by === 'admin' ? 'Admin' : 'Customer'}</p>
+                                    <p className="text-sm"><strong>Reason:</strong> {selectedOrder.cancellation_reason || 'Not specified'}</p>
+                                    {selectedOrder.refund_status && (
+                                        <p className="text-sm"><strong>Refund Status:</strong> {selectedOrder.refund_status}</p>
+                                    )}
+                                </div>
+                            )}
+                            {selectedOrder.return_requested === 1 && (
+                                <div className="mb-6 bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                                    <h4 className="font-semibold mb-2 text-orange-700 dark:text-orange-400">
+                                        <i className="fas fa-undo-alt mr-2"></i>Return Requested — {selectedOrder.return_status?.toUpperCase() || 'PENDING'}
+                                    </h4>
+                                    <p className="text-sm"><strong>Reason:</strong> {selectedOrder.return_reason || 'Not specified'}</p>
+                                    {selectedOrder.return_status === 'pending' && (
+                                        <div className="flex gap-3 mt-3">
+                                            <button
+                                                onClick={() => { processReturnRequest(selectedOrder, 'approve'); setShowDetailsModal(false); }}
+                                                className="btn btn-small bg-green-500 text-white"
+                                            >
+                                                Approve & Refund
+                                            </button>
+                                            <button
+                                                onClick={() => { processReturnRequest(selectedOrder, 'reject'); setShowDetailsModal(false); }}
+                                                className="btn-outline btn-small border-red-500 text-red-500"
+                                            >
+                                                Reject
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Customer Info */}
                             <div className="mb-6">

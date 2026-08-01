@@ -10,6 +10,7 @@ const AdminHeroSlider = () => {
     const [editingItem, setEditingItem] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [removeImage, setRemoveImage] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -40,7 +41,18 @@ const AdminHeroSlider = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
             setImageFile(file);
+            setRemoveImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -49,8 +61,20 @@ const AdminHeroSlider = () => {
         }
     };
 
+    const handleRemoveImage = () => {
+        setImagePreview(null);
+        setImageFile(null);
+        setRemoveImage(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // For new item, image is required
+        if (!editingItem && !imageFile) {
+            toast.error('Please select an image for the slide');
+            return;
+        }
         
         const formDataToSend = new FormData();
         formDataToSend.append('title', formData.title);
@@ -62,8 +86,23 @@ const AdminHeroSlider = () => {
         formDataToSend.append('display_order', formData.display_order || 0);
         formDataToSend.append('is_active', formData.is_active ? '1' : '0');
         
-        if (imageFile) {
-            formDataToSend.append('image', imageFile);
+        // Handle image for edit mode
+        if (editingItem) {
+            if (removeImage) {
+                // User wants to remove the image
+                formDataToSend.append('remove_image', 'true');
+                console.log('Hero slider image removal requested');
+            } else if (imageFile) {
+                // User uploaded a new image
+                formDataToSend.append('image', imageFile);
+                console.log('New hero slider image uploaded');
+            }
+            // If neither, keep existing image
+        } else {
+            // New slider - image is required
+            if (imageFile) {
+                formDataToSend.append('image', imageFile);
+            }
         }
         
         try {
@@ -81,6 +120,7 @@ const AdminHeroSlider = () => {
             resetForm();
             fetchSliders();
         } catch (error) {
+            console.error('Submit error:', error);
             toast.error(error.response?.data?.error || 'Operation failed');
         }
     };
@@ -99,8 +139,9 @@ const AdminHeroSlider = () => {
 
     const handleEdit = (item) => {
         setEditingItem(item);
+        setRemoveImage(false);
         setFormData({
-            title: item.title,
+            title: item.title || '',
             description: item.description || '',
             button_text: item.button_text || 'Book Now',
             button_link: item.button_link || '/booking',
@@ -111,6 +152,10 @@ const AdminHeroSlider = () => {
         });
         if (item.image_url) {
             setImagePreview(`http://localhost:5000${item.image_url}`);
+            setImageFile(null);
+        } else {
+            setImagePreview(null);
+            setImageFile(null);
         }
         setShowModal(true);
     };
@@ -130,6 +175,7 @@ const AdminHeroSlider = () => {
         });
         setImagePreview(null);
         setImageFile(null);
+        setRemoveImage(false);
     };
 
     const columns = [
@@ -302,18 +348,22 @@ const AdminHeroSlider = () => {
                             </div>
                             
                             <div className="mb-6">
-                                <label className="block font-medium mb-2">Slide Image</label>
+                                <label className="block font-medium mb-2">
+                                    Slide Image {!editingItem && '*'}
+                                    {editingItem && ' (Leave empty to keep current)'}
+                                </label>
                                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                                     {imagePreview ? (
                                         <div className="relative">
                                             <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
                                             <button
                                                 type="button"
-                                                onClick={() => { setImagePreview(null); setImageFile(null); }}
-                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                onClick={handleRemoveImage}
+                                                className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                             >
                                                 <i className="fas fa-times text-xs"></i>
                                             </button>
+                                            <p className="text-xs text-gray">Click × to remove image</p>
                                         </div>
                                     ) : (
                                         <>
@@ -330,7 +380,7 @@ const AdminHeroSlider = () => {
                                         id="hero-image"
                                     />
                                     {!imagePreview && (
-                                        <label htmlFor="hero-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                        <label htmlFor="hero-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                             Choose Image
                                         </label>
                                     )}

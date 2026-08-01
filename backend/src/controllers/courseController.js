@@ -215,11 +215,11 @@ const updateCourse = async (req, res) => {
             duration_hours, price, original_price, discount_percent,
             offer_badge, offer_end_date, is_on_offer,
             is_featured, display_order,
-            meta_title, meta_description
+            meta_title, meta_description, remove_thumbnail
         } = req.body;
 
         console.log('Updating course ID:', id);
-        console.log('Received data:', { title, price, original_price, discount_percent, is_on_offer });
+        console.log('Received data:', { title, price, original_price, discount_percent, is_on_offer, remove_thumbnail });
 
         // CRITICAL FIX: Convert empty strings to null for database
         const sanitizeValue = (value) => {
@@ -238,11 +238,13 @@ const updateCourse = async (req, res) => {
             return isNaN(num) ? null : num;
         };
 
+        // Handle thumbnail logic
         let thumbnail_url = null;
-        if (req.file) {
-            thumbnail_url = `/uploads/courses/${req.file.filename}`;
+        let shouldUpdateThumbnail = false;
 
-            // Delete old thumbnail
+        // Check if user wants to remove thumbnail
+        if (remove_thumbnail === 'true' || remove_thumbnail === true) {
+            // Get current thumbnail to delete it
             const [current] = await db.execute('SELECT thumbnail FROM courses WHERE id = ?', [id]);
             if (current[0]?.thumbnail) {
                 const fs = require('fs');
@@ -250,8 +252,30 @@ const updateCourse = async (req, res) => {
                 const oldPath = path.join(__dirname, '../../', current[0].thumbnail);
                 if (fs.existsSync(oldPath)) {
                     fs.unlinkSync(oldPath);
+                    console.log('Deleted old course thumbnail:', oldPath);
                 }
             }
+            thumbnail_url = null;
+            shouldUpdateThumbnail = true;
+            console.log('Course thumbnail removal requested - will set thumbnail to NULL');
+        }
+        // Check if new thumbnail is uploaded
+        else if (req.file) {
+            thumbnail_url = `/uploads/courses/${req.file.filename}`;
+            shouldUpdateThumbnail = true;
+
+            // Delete old thumbnail if exists
+            const [current] = await db.execute('SELECT thumbnail FROM courses WHERE id = ?', [id]);
+            if (current[0]?.thumbnail) {
+                const fs = require('fs');
+                const path = require('path');
+                const oldPath = path.join(__dirname, '../../', current[0].thumbnail);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                    console.log('Deleted old course thumbnail:', oldPath);
+                }
+            }
+            console.log('New course thumbnail uploaded:', thumbnail_url);
         }
 
         // CRITICAL FIX: Sanitize all values before using in query
@@ -298,7 +322,8 @@ const updateCourse = async (req, res) => {
             sanitizedMetaDescription
         ];
 
-        if (thumbnail_url) {
+        // Add thumbnail to query if we need to update it
+        if (shouldUpdateThumbnail) {
             query += ', thumbnail = ? WHERE id = ?';
             values.push(thumbnail_url, id);
         } else {

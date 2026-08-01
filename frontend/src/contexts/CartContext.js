@@ -31,11 +31,34 @@ export const CartProvider = ({ children }) => {
 
     useEffect(() => {
         if (isAuthenticated) {
-            fetchCart();
+            const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+            if (localCart.length > 0) {
+                mergeGuestCart(localCart);
+            } else {
+                fetchCart();
+            }
         } else {
             loadLocalCart();
         }
     }, [isAuthenticated]);
+
+    const mergeGuestCart = async (localItems) => {
+        try {
+            for (const item of localItems) {
+                await api.post('/cart', {
+                    product_id: item.product_id,
+                    quantity: item.quantity
+                });
+            }
+            localStorage.removeItem('cart');
+            fetchCart();
+        } catch (error) {
+            console.error('Merge cart error:', error);
+            // Fallback: just clear local and fetch
+            localStorage.removeItem('cart');
+            fetchCart();
+        }
+    };
 
     const fetchCart = async () => {
         try {

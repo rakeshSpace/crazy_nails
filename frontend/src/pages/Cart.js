@@ -139,7 +139,7 @@ const Cart = () => {
                                 <h1 className="text-4xl font-bold text-dark dark:text-white">Your Cart</h1>
                                 <p className="text-gray flex items-center gap-2">
                                     <span className="w-2 h-2 bg-primary rounded-full inline-block"></span>
-                                    {getItemCount()} {getItemCount() === 1 ? 'item' : 'items'} in your cart
+                                    {getItemCount()} {getItemCount() === 1 ? 'quantity' : 'quantities'} in your cart
                                 </p>
                             </div>
                         </div>

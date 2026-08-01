@@ -12,6 +12,7 @@ const AdminCourses = () => {
     const [editingCourse, setEditingCourse] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState(null);
     const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [removeThumbnail, setRemoveThumbnail] = useState(false);
     const [activeTab, setActiveTab] = useState('basic');
 
     // Course details states
@@ -186,12 +187,19 @@ const AdminCourses = () => {
                 return;
             }
             setThumbnailFile(file);
+            setRemoveThumbnail(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setThumbnailPreview(reader.result);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleRemoveThumbnail = () => {
+        setThumbnailPreview(null);
+        setThumbnailFile(null);
+        setRemoveThumbnail(true);
     };
 
     const handleOfferToggle = (e) => {
@@ -223,7 +231,7 @@ const AdminCourses = () => {
         }
     };
 
-    // FIXED: Complete handleSubmit function
+    // FIXED: Complete handleSubmit function with thumbnail removal
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -259,27 +267,34 @@ const AdminCourses = () => {
 
         // IMPORTANT: Send empty strings as empty strings, backend will handle conversion to null
         if (formData.is_on_offer) {
-            // Send original_price (can be empty string)
             submitData.append('original_price', formData.original_price || '');
-
-            // Send discount_percent (can be empty string)
             submitData.append('discount_percent', formData.discount_percent || '');
-
-            // Send offer_badge (can be empty string)
             submitData.append('offer_badge', formData.offer_badge || '');
-
-            // Send offer_end_date (can be empty string)
             submitData.append('offer_end_date', formData.offer_end_date || '');
         } else {
-            // If offer is disabled, send empty strings to clear the fields
             submitData.append('original_price', '');
             submitData.append('discount_percent', '');
             submitData.append('offer_badge', '');
             submitData.append('offer_end_date', '');
         }
 
-        if (thumbnailFile) {
-            submitData.append('thumbnail', thumbnailFile);
+        // Handle thumbnail for edit mode
+        if (editingCourse) {
+            if (removeThumbnail) {
+                // User wants to remove the thumbnail
+                submitData.append('remove_thumbnail', 'true');
+                console.log('Course thumbnail removal requested');
+            } else if (thumbnailFile) {
+                // User uploaded a new thumbnail
+                submitData.append('thumbnail', thumbnailFile);
+                console.log('New course thumbnail uploaded');
+            }
+            // If neither, keep existing thumbnail
+        } else {
+            // New course - thumbnail is optional
+            if (thumbnailFile) {
+                submitData.append('thumbnail', thumbnailFile);
+            }
         }
 
         try {
@@ -448,6 +463,7 @@ const AdminCourses = () => {
     const handleEdit = async (course) => {
         console.log('Editing course:', course);
         setEditingCourse(course);
+        setRemoveThumbnail(false);
         const isOfferActive = course.is_on_offer === 1;
         const formattedEndDate = formatDateForInput(course.offer_end_date);
         setFormData({
@@ -470,8 +486,10 @@ const AdminCourses = () => {
         });
         if (course.thumbnail) {
             setThumbnailPreview(`http://localhost:5000${course.thumbnail}`);
+            setThumbnailFile(null);
         } else {
             setThumbnailPreview(null);
+            setThumbnailFile(null);
         }
         await fetchCourseDetails(course.id);
         setShowModal(true);
@@ -504,6 +522,7 @@ const AdminCourses = () => {
         });
         setThumbnailPreview(null);
         setThumbnailFile(null);
+        setRemoveThumbnail(false);
         setActiveTab('basic');
         setNewRequirement('');
         setNewOutcome('');
@@ -890,18 +909,21 @@ const AdminCourses = () => {
                                         </div>
 
                                         <div className="mb-6">
-                                            <label className="block font-medium mb-2">Course Thumbnail</label>
+                                            <label className="block font-medium mb-2">
+                                                Course Thumbnail {editingCourse && ' (Leave empty to keep current)'}
+                                            </label>
                                             <div className="border-2 border-dashed border-light-gray dark:border-gray-700 rounded-lg p-4 text-center">
                                                 {thumbnailPreview ? (
                                                     <div className="relative inline-block">
-                                                        <img src={thumbnailPreview} alt="Preview" className="w-24 h-24 object-cover rounded-lg mx-auto mb-2" />
+                                                        <img src={thumbnailPreview} alt="Preview" className="w-32 h-24 object-cover rounded-lg mx-auto mb-2" />
                                                         <button
                                                             type="button"
-                                                            onClick={() => { setThumbnailPreview(null); setThumbnailFile(null); }}
-                                                            className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                            onClick={handleRemoveThumbnail}
+                                                            className="absolute top-0 right-0 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                                         >
                                                             <i className="fas fa-times text-xs"></i>
                                                         </button>
+                                                        <p className="text-xs text-gray">Click × to remove image</p>
                                                     </div>
                                                 ) : (
                                                     <>
@@ -918,7 +940,7 @@ const AdminCourses = () => {
                                                     id="course-thumbnail"
                                                 />
                                                 {!thumbnailPreview && (
-                                                    <label htmlFor="course-thumbnail" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                                    <label htmlFor="course-thumbnail" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                                         Choose Image
                                                     </label>
                                                 )}

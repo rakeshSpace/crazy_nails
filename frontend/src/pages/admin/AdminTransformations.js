@@ -12,6 +12,8 @@ const AdminTransformations = () => {
     const [afterPreview, setAfterPreview] = useState(null);
     const [beforeFile, setBeforeFile] = useState(null);
     const [afterFile, setAfterFile] = useState(null);
+    const [removeBeforeImage, setRemoveBeforeImage] = useState(false);
+    const [removeAfterImage, setRemoveAfterImage] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -47,7 +49,16 @@ const AdminTransformations = () => {
     const handleBeforeImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
             setBeforeFile(file);
+            setRemoveBeforeImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setBeforePreview(reader.result);
@@ -59,7 +70,16 @@ const AdminTransformations = () => {
     const handleAfterImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error('Image size should be less than 5MB');
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                toast.error('Please select an image file');
+                return;
+            }
             setAfterFile(file);
+            setRemoveAfterImage(false);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setAfterPreview(reader.result);
@@ -68,8 +88,31 @@ const AdminTransformations = () => {
         }
     };
 
+    const handleRemoveBeforeImage = () => {
+        setBeforePreview(null);
+        setBeforeFile(null);
+        setRemoveBeforeImage(true);
+    };
+
+    const handleRemoveAfterImage = () => {
+        setAfterPreview(null);
+        setAfterFile(null);
+        setRemoveAfterImage(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!formData.title) {
+            toast.error('Title is required');
+            return;
+        }
+        
+        // For new item, at least one image is required
+        if (!editingItem && !beforeFile && !afterFile) {
+            toast.error('Please upload at least one image (Before or After)');
+            return;
+        }
         
         const formDataToSend = new FormData();
         formDataToSend.append('title', formData.title);
@@ -83,12 +126,33 @@ const AdminTransformations = () => {
             formDataToSend.append('tags', JSON.stringify(tagsArray));
         }
         
-        if (beforeFile) {
-            formDataToSend.append('before_image', beforeFile);
-        }
-        
-        if (afterFile) {
-            formDataToSend.append('after_image', afterFile);
+        // Handle images for edit mode
+        if (editingItem) {
+            // Before Image
+            if (removeBeforeImage) {
+                formDataToSend.append('remove_before_image', 'true');
+                console.log('Before image removal requested');
+            } else if (beforeFile) {
+                formDataToSend.append('before_image', beforeFile);
+                console.log('New before image uploaded');
+            }
+            
+            // After Image
+            if (removeAfterImage) {
+                formDataToSend.append('remove_after_image', 'true');
+                console.log('After image removal requested');
+            } else if (afterFile) {
+                formDataToSend.append('after_image', afterFile);
+                console.log('New after image uploaded');
+            }
+        } else {
+            // New transformation - images are optional but at least one required
+            if (beforeFile) {
+                formDataToSend.append('before_image', beforeFile);
+            }
+            if (afterFile) {
+                formDataToSend.append('after_image', afterFile);
+            }
         }
         
         try {
@@ -106,6 +170,7 @@ const AdminTransformations = () => {
             resetForm();
             fetchTransformations();
         } catch (error) {
+            console.error('Submit error:', error);
             toast.error(error.response?.data?.error || 'Operation failed');
         }
     };
@@ -124,19 +189,30 @@ const AdminTransformations = () => {
 
     const handleEdit = (item) => {
         setEditingItem(item);
+        setRemoveBeforeImage(false);
+        setRemoveAfterImage(false);
         setFormData({
-            title: item.title,
+            title: item.title || '',
             description: item.description || '',
-            category: item.category,
+            category: item.category || 'nails',
             tags: item.tags ? item.tags.join(', ') : '',
             display_order: item.display_order || ''
         });
         
         if (item.before_image) {
             setBeforePreview(`http://localhost:5000${item.before_image}`);
+            setBeforeFile(null);
+        } else {
+            setBeforePreview(null);
+            setBeforeFile(null);
         }
+        
         if (item.after_image) {
             setAfterPreview(`http://localhost:5000${item.after_image}`);
+            setAfterFile(null);
+        } else {
+            setAfterPreview(null);
+            setAfterFile(null);
         }
         
         setShowModal(true);
@@ -156,6 +232,8 @@ const AdminTransformations = () => {
         setAfterPreview(null);
         setBeforeFile(null);
         setAfterFile(null);
+        setRemoveBeforeImage(false);
+        setRemoveAfterImage(false);
     };
 
     const columns = [
@@ -165,13 +243,17 @@ const AdminTransformations = () => {
         {
             name: 'Images',
             cell: row => (
-                <div className="flex gap-2">
-                    {row.before_image && (
+                <div className="flex gap-2 items-center">
+                    {row.before_image ? (
                         <img src={`http://localhost:5000${row.before_image}`} alt="Before" className="w-10 h-10 object-cover rounded" />
+                    ) : (
+                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-400">No</div>
                     )}
-                    <i className="fas fa-arrow-right text-primary"></i>
-                    {row.after_image && (
+                    <i className="fas fa-arrow-right text-primary text-xs"></i>
+                    {row.after_image ? (
                         <img src={`http://localhost:5000${row.after_image}`} alt="After" className="w-10 h-10 object-cover rounded" />
+                    ) : (
+                        <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-400">No</div>
                     )}
                 </div>
             ),
@@ -289,18 +371,21 @@ const AdminTransformations = () => {
                             <div className="grid grid-cols-2 gap-6 mb-6">
                                 {/* Before Image */}
                                 <div>
-                                    <label className="block font-medium mb-2">Before Image</label>
+                                    <label className="block font-medium mb-2">
+                                        Before Image {editingItem ? '(Optional)' : ''}
+                                    </label>
                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                                         {beforePreview ? (
                                             <div className="relative">
                                                 <img src={beforePreview} alt="Before Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
                                                 <button
                                                     type="button"
-                                                    onClick={() => { setBeforePreview(null); setBeforeFile(null); }}
-                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                    onClick={handleRemoveBeforeImage}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                                 >
                                                     <i className="fas fa-times text-xs"></i>
                                                 </button>
+                                                <p className="text-xs text-gray">Click × to remove image</p>
                                             </div>
                                         ) : (
                                             <>
@@ -317,7 +402,7 @@ const AdminTransformations = () => {
                                             id="before-image"
                                         />
                                         {!beforePreview && (
-                                            <label htmlFor="before-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                            <label htmlFor="before-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                                 Choose Image
                                             </label>
                                         )}
@@ -326,18 +411,21 @@ const AdminTransformations = () => {
                                 
                                 {/* After Image */}
                                 <div>
-                                    <label className="block font-medium mb-2">After Image</label>
+                                    <label className="block font-medium mb-2">
+                                        After Image {editingItem ? '(Optional)' : ''}
+                                    </label>
                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
                                         {afterPreview ? (
                                             <div className="relative">
                                                 <img src={afterPreview} alt="After Preview" className="w-full h-40 object-cover rounded-lg mb-2" />
                                                 <button
                                                     type="button"
-                                                    onClick={() => { setAfterPreview(null); setAfterFile(null); }}
-                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center"
+                                                    onClick={handleRemoveAfterImage}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full text-white flex items-center justify-center hover:bg-red-600 transition-colors"
                                                 >
                                                     <i className="fas fa-times text-xs"></i>
                                                 </button>
+                                                <p className="text-xs text-gray">Click × to remove image</p>
                                             </div>
                                         ) : (
                                             <>
@@ -354,7 +442,7 @@ const AdminTransformations = () => {
                                             id="after-image"
                                         />
                                         {!afterPreview && (
-                                            <label htmlFor="after-image" className="mt-2 inline-block text-primary text-sm cursor-pointer">
+                                            <label htmlFor="after-image" className="mt-2 inline-block text-primary text-sm cursor-pointer hover:text-primary-dark">
                                                 Choose Image
                                             </label>
                                         )}
